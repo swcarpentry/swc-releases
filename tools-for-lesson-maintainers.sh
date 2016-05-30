@@ -20,6 +20,7 @@ clone-branch-build-commit() {
         make clean preview
         git add *.html
         git commit -m "Rebuilt HTML files for release $as"
+        git diff HEAD~
         git log
         echo Will git push unless you Ctrl+C
         read DUMMY
@@ -28,5 +29,9 @@ clone-branch-build-commit() {
     } || cd -
 }
 
-
+custom1() {
+    for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
+        clone-branch-build-commit $i 2016.06-alpha
+    done
+}
 

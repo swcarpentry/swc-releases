@@ -27,6 +27,14 @@ fail() {
 progress() {
     echo "    #### $@"
 }
+ensure-git-version-is-at-least() {
+    local v
+    v=$(git version | awk '{print $NF}' | tr -d '.')
+    if test "$v" -lt "$1" ; then
+        echo "Expected git version at least $1, found $v"
+        false
+    fi
+}
 
 #if [ "$(pwd)" = "$W" ] ; then
 #    echo "This script should probably not be run run from the $W folder, but rather from its parent."
@@ -60,7 +68,9 @@ else
         progress "  - Adding submodule for lesson '$L'"
         l=$(resolve-lesson "$L")
         if is-branch "$l" "$TAG" ; then
-            progress "    - it is a branch, TODO"
+            ensure-git-version-is-at-least 182 # for submodule with branch
+            progress "    - it is a branch, adding a tracking submodule"
+            git submodule add -b "$TAG" "$l"
         elif is-tag "$l" "$TAG" ; then
             progress "    - it is a tag, adding a simple submodule"
             # the "--force" avoids recloning every time we try the script
@@ -94,4 +104,4 @@ echo "</body>" >> index.html
 progress "  - adding index.html to git"
 git add index.html
 
-progress "- FINISHED WITH NO ERRORS"
+progress "- FINISHED WITH NO ERRORS (you may review it and commit/push)"

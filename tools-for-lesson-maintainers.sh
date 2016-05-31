@@ -3,7 +3,11 @@
 
 # same as in "make-or-update-release.sh" but for write access
 resolve-lesson() {
-    printf %s "git@github.com:swcarpentry/$1.git"
+    if [[ ${1:0:3} == 'dc:' ]] ; then
+        printf %s "git@github.com:datacarpentry/${1:3}.git"
+    else
+        printf %s "git@github.com:swcarpentry/$1.git"
+    fi
 }
 
 # this one may need to be updated once we use the new build system

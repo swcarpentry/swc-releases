@@ -7,7 +7,11 @@ W=$(dirname $(readlink -f $0))
 
 ### Tools
 resolve-lesson() {
-    printf %s "https://github.com/swcarpentry/$1"
+    if [[ ${1:0:3} == 'dc:' ]] ; then
+        printf %s "https://github.com/datacarpentry/${1:3}.git"
+    else
+        printf %s "https://github.com/swcarpentry/$1"
+    fi
 }
 is-tag() {
     test "$2" = v5.3

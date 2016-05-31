@@ -74,7 +74,7 @@ else
         if is-branch "$l" "$TAG" ; then
             ensure-git-version-is-at-least 182 # for submodule with branch
             progress "    - it is a branch, adding a tracking submodule"
-            git submodule add -b "$TAG" "$l"
+            git submodule add --force -b "$TAG" "$l"
         elif is-tag "$l" "$TAG" ; then
             progress "    - it is a tag, adding a simple submodule"
             # the "--force" avoids recloning every time we try the script

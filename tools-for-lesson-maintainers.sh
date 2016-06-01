@@ -11,7 +11,7 @@ resolve-lesson() {
 }
 
 # this one may need to be updated once we use the new build system
-clone-branch-build-commit() {
+clonelatest-branch-build-commit() {
     if test $# -lt 2 ; then
         echo "Expect <repo> <version>"
         return
@@ -23,7 +23,53 @@ clone-branch-build-commit() {
         git checkout -b $vers
         make clean preview
         git add *.html
-        git commit -m "Rebuilt HTML files for release $as"
+        git commit -m "Rebuilt HTML files for release $vers"
+        git diff HEAD~
+        git log
+        echo Will git push unless you Ctrl+C
+        read DUMMY
+        git push --set-upstream origin $vers
+        cd -
+    } || cd -
+}
+
+patchcss-commit() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <version>"
+        return
+    fi
+    as=$1
+    vers=$2
+    repo=$(resolve-lesson $as)
+    css=css/swc.css
+    cd ,,$as && {
+        if grep -q 'version added automatically' $css ; then
+            echo "INFO: seems already patched, removing the end of it"
+            \cp $css ,,css
+            cat ,,css | awk '/version added automatically/ {exit} {print}' > "$css"
+        fi
+        cat <<EOF >> $css
+/* version added automatically */
+div.banner::before {
+    content: "Version $vers";
+    font-size: 10px;
+    font-family: monospace;
+    font-weight: bold;
+    line-height: 1;
+    /* */
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    /* */
+    color: white;
+    background: rgb(43, 57, 144);
+    padding: 3px;
+    border: 1px solid white;
+}
+EOF
+        git add $css
+        git commit -m "Added version ($vers) to pages via CSS"
         git diff HEAD~
         git log
         echo Will git push unless you Ctrl+C
@@ -35,7 +81,17 @@ clone-branch-build-commit() {
 
 custom1() {
     for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
-        clone-branch-build-commit $i 2016.06-alpha
+        clonelatest-branch-build-commit $i 2016.06-alpha
     done
 }
 
+custom2() {
+    for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
+        echo '### ' $i
+        patchcss-commit $i 2016.06-alpha
+    done
+}
+
+custom3() {
+    git submodule update --remote -- 2016.06-alpha/*
+}

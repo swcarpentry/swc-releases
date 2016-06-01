@@ -1,0 +1,18 @@
+[submodule "2015.08/shell-novice"]
+	path = 2015.08/shell-novice
+	url = https://github.com/swcarpentry/shell-novice
+[submodule "2015.08/git-novice"]
+	path = 2015.08/git-novice
+	url = https://github.com/swcarpentry/git-novice
+[submodule "2015.08/hg-novice"]
+	path = 2015.08/hg-novice
+	url = https://github.com/swcarpentry/hg-novice
+[submodule "2015.08/sql-novice-survey"]
+	path = 2015.08/sql-novice-survey
+	url = https://github.com/swcarpentry/sql-novice-survey
+[submodule "2015.08/python-novice-inflammation"]
+	path = 2015.08/python-novice-inflammation
+	url = https://github.com/swcarpentry/python-novice-inflammation
+[submodule "2015.08/r-novice-inflammation"]
+	path = 2015.08/r-novice-inflammation
+	url = https://github.com/swcarpentry/r-novice-inflammation

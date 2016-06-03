@@ -10,30 +10,37 @@ resolve-lesson() {
     fi
 }
 
-# this one may need to be updated once we use the new build system
-clonelatest-branch-build-commit() {
-    if test $# -lt 2 ; then
-        echo "Expect <repo> <version>"
+# slightly more modular than below
+do-clone() {
+    if test $# -lt 1 ; then
+        echo "Expect <repo>"
         return
     fi
     as=$1
-    vers=$2
     repo=$(resolve-lesson $as)
-    git clone $repo ,,$as --depth=1 && cd ,,$as && {
-        git checkout -b $vers
-        make clean preview
-        git add *.html
-        git commit -m "Rebuilt HTML files for release $vers"
-        git diff HEAD~
-        git log
-        echo Will git push unless you Ctrl+C
-        read DUMMY
-        git push --set-upstream origin $vers
-        cd -
-    } || cd -
+    git clone $repo ,,$as --depth=1 --no-single-branch
 }
-
-patchcss-commit() {
+do-checkout() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <ref> [new-branch]"
+        return
+    fi
+    as=$1
+    ref=$2
+    branchit=$3
+    repo=$(resolve-lesson $as)
+    MINUSB=-b
+    if [[ "$FORCE" != "" ]] ; then
+        MINUSB=-B
+    fi
+    (cd ,,$as && {
+            git checkout $ref
+            if [[ "$branchit" != "" ]] ; then
+                git checkout $MINUSB $branchit
+            fi
+    })
+}
+do-add-css() {
     if test $# -lt 2 ; then
         echo "Expect <repo> <version>"
         return
@@ -42,16 +49,79 @@ patchcss-commit() {
     vers=$2
     repo=$(resolve-lesson $as)
     css=css/swc.css
-    cd ,,$as && {
-        if grep -q 'version added automatically' $css ; then
-            echo "INFO: seems already patched, removing the end of it"
-            \cp $css ,,css
-            cat ,,css | awk '/version added automatically/ {exit} {print}' > "$css"
-        fi
-        cat <<EOF >> $css
+    (cd ,,$as && {
+            if grep -q 'version added automatically' $css ; then
+                echo "INFO: seems already patched, removing the end of it"
+                \cp $css ,,css
+                cat ,,css | awk '/version added automatically/ {exit} {print}' > "$css"
+            fi
+            gen-css >> $css
+            git add $css
+            git commit $MORECOMMIT -m "Added version ($vers) to all pages via CSS"
+    })
+}
+do-diff-log() {
+    if test $# -lt 1 ; then
+        echo "Expect <repo>"
+        return
+    fi
+    as=$1
+    repo=$(resolve-lesson $as)
+    (cd ,,$as && {
+            git diff HEAD~
+            git log
+    })
+}
+do-push() {
+    if test $# -lt 1 ; then
+        echo "Expect <repo>"
+        return
+    fi
+    as=$1
+    repo=$(resolve-lesson $as)
+    (cd ,,$as && {
+            echo Will git push unless you Ctrl+C
+            $READ read DUMMY
+            $PUSH git push $MOREPUSH
+    })
+}
+do-push-upstream() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <version>"
+        return
+    fi
+    as=$1
+    vers=$2
+    repo=$(resolve-lesson $as)
+    (cd ,,$as && {
+            echo Will git push unless you Ctrl+C
+            $READ read DUMMY
+            $PUSH git push $MOREPUSH --set-upstream origin $vers
+    })
+}
+
+do-1() {
+    for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
+
+        v=2015.08
+        #do-clone $i
+
+        #FORCE=1 do-checkout $i v5.3 $v
+        #do-add-css $i $v
+        #do-diff-log $i
+
+        READ=echo do-push-upstream $i $v
+    done
+}
+
+do-2() {
+}
+
+gen-css() {
+        cat <<EOF
 /* version added automatically */
 div.banner::before {
-    content: "Version $vers";
+    content: "Version $1";
     font-size: 10px;
     font-family: monospace;
     font-weight: bold;
@@ -59,7 +129,7 @@ div.banner::before {
     /* */
     position: fixed;
     right: 0;
-    bottom: 0;
+    top: 0;
     z-index: 10;
     /* */
     color: white;
@@ -68,30 +138,75 @@ div.banner::before {
     border: 1px solid white;
 }
 EOF
-        git add $css
-        git commit -m "Added version ($vers) to pages via CSS"
-        git diff HEAD~
-        git log
-        echo Will git push unless you Ctrl+C
-        read DUMMY
-        git push --set-upstream origin $vers
-        cd -
-    } || cd -
 }
 
+
+
+
+
+
+
+# this one may need to be updated once we use the new build system
+clonelatest-branch-build-commit() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <version>"
+        return
+    fi
+    clone-branch-build-commit "$1" gh-pages "$2"
+}
+
+clone-branch-build-commit() {
+    if test $# -lt 3 ; then
+        echo "Expect <repo> <ref> <version>"
+        return
+    fi
+    as=$1
+    ref=$2
+    vers=$3
+    repo=$(resolve-lesson $as)
+    git clone $repo ,,$as --depth=1 --no-single-branch && cd ,,$as && ({
+        git checkout $ref
+        git checkout -b $vers
+        make clean preview
+        git add *.html
+        git commit -m "Rebuilt HTML files for release $vers" && git diff HEAD~
+        git log
+        echo Will git push unless you Ctrl+C
+        $READ read DUMMY
+        $PUSH git push --set-upstream origin $vers
+        cd -
+    } || cd -)
+}
+
+
+
+
+
+
+
+# this one was used to generate the alpha version, using the latest master at the time
 custom1() {
     for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
         clonelatest-branch-build-commit $i 2016.06-alpha
     done
 }
 
+# this one to add (or readd with the parameters) the css patch to the alpha version
 custom2() {
     for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
         echo '### ' $i
-        patchcss-commit $i 2016.06-alpha
+        MORECOMMIT=--amend MOREPUSH=--force patchcss-commit $i 2016.06-alpha
     done
 }
 
+# this one can be used to update submodules (need to commit and push after)
 custom3() {
     git submodule update --remote -- 2016.06-alpha/*
+}
+
+# (1 shot), to create the 2015.08 from v5.3
+custom4() {
+    for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
+        READ=echo PUSH=echo clone-branch-build-commit $i v5.3 2015.08
+    done
 }

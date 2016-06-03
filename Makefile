@@ -13,7 +13,11 @@ CORE_LESSONS_A=shell-novice git-novice hg-novice sql-novice-survey python-novice
 2016.06-alpha:
 	./make-or-update-release.sh $@ ${CORE_LESSONS_A}
 
+update-submodules:
+	git submodule update --remote -- 2015.08/* 2016.06-alpha/*
+
 
 # can be useful (especially for development) if a release fails, you delete the subfolder and want to also delete the added submodules etc.
 clean-failure:
+	@echo "To do a full clean, you might also need to delete some things in .git/modules/"
 	git rm $$(git ls-files -d)

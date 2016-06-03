@@ -55,7 +55,7 @@ do-add-css() {
                 \cp $css ,,css
                 cat ,,css | awk '/version added automatically/ {exit} {print}' > "$css"
             fi
-            gen-css >> $css
+            gen-css $vers >> $css
             git add $css
             git commit $MORECOMMIT -m "Added version ($vers) to all pages via CSS"
     })
@@ -106,15 +106,17 @@ do-1() {
         v=2015.08
         #do-clone $i
 
-        #FORCE=1 do-checkout $i v5.3 $v
-        #do-add-css $i $v
+        FORCE=1 do-checkout $i v5.3 $v
+        do-add-css $i $v
         #do-diff-log $i
 
+        #MOREPUSH=--force
         READ=echo do-push-upstream $i $v
     done
 }
 
 do-2() {
+    echo none
 }
 
 gen-css() {
@@ -197,11 +199,6 @@ custom2() {
         echo '### ' $i
         MORECOMMIT=--amend MOREPUSH=--force patchcss-commit $i 2016.06-alpha
     done
-}
-
-# this one can be used to update submodules (need to commit and push after)
-custom3() {
-    git submodule update --remote -- 2016.06-alpha/*
 }
 
 # (1 shot), to create the 2015.08 from v5.3

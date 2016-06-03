@@ -8,7 +8,7 @@ CORE_LESSONS_A=shell-novice git-novice hg-novice sql-novice-survey python-novice
 .PHONY: 2015.08 2016.06-alpha
 
 2015.08:
-	TAG=v5.3 ./make-or-update-release.sh $@ ${CORE_LESSONS_A}
+	./make-or-update-release.sh $@ ${CORE_LESSONS_A}
 
 2016.06-alpha:
 	./make-or-update-release.sh $@ ${CORE_LESSONS_A}

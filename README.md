@@ -17,6 +17,8 @@ An informed release maintainer can also look at `tools-for-lesson-maintainers.sh
 
 NB: the HTML pages can be built before (on the gh-pages branch) or after (only in the release branch).
 
+NB: your pandoc version may matter for building the pages, see this thread <http://lists.software-carpentry.org/pipermail/discuss/2016-June/004553.html>
+
 You should already be on the gh-pages branch, but, if not, switch to it:
 
     git checkout gh-pages

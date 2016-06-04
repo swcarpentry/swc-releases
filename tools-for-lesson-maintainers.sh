@@ -94,7 +94,7 @@ do-push-upstream() {
     vers=$2
     repo=$(resolve-lesson $as)
     (cd ,,$as && {
-            echo Will git push unless you Ctrl+C
+            echo Will git push unless you Ctrl+C (press enter to continue)
             $READ read DUMMY
             $PUSH git push $MOREPUSH --set-upstream origin $vers
     })

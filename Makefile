@@ -18,7 +18,7 @@ CORE_LESSONS_A=shell-novice git-novice hg-novice sql-novice-survey python-novice
 
 update-submodules:
 	#git submodule update --remote -- 2015.08/*
-	#git submodule update --remote -- 2016.06-alpha/*
+	git submodule update --remote -- 2016.06-alpha/*
 	#git submodule update --remote -- 2016.06-beta/*
 
 

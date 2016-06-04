@@ -60,6 +60,20 @@ do-add-css() {
             git commit $MORECOMMIT -m "Added version ($vers) to all pages via CSS"
     })
 }
+do-rebuild-pandoc() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <version>"
+        return
+    fi
+    as=$1
+    vers=$2
+    repo=$(resolve-lesson $as)
+    (cd ,,$as && {
+            make clean preview
+            git add *.html
+            git commit -m "Rebuilt HTML files for release $vers"
+    })
+}
 do-diff-log() {
     if test $# -lt 1 ; then
         echo "Expect <repo>"
@@ -80,7 +94,7 @@ do-push() {
     as=$1
     repo=$(resolve-lesson $as)
     (cd ,,$as && {
-            echo Will git push unless you Ctrl+C
+            echo "Will git push unless you Ctrl+C (press enter to continue)"
             $READ read DUMMY
             $PUSH git push $MOREPUSH
     })
@@ -94,7 +108,7 @@ do-push-upstream() {
     vers=$2
     repo=$(resolve-lesson $as)
     (cd ,,$as && {
-            echo Will git push unless you Ctrl+C (press enter to continue)
+            echo "Will git push unless you Ctrl+C (press enter to continue)"
             $READ read DUMMY
             $PUSH git push $MOREPUSH --set-upstream origin $vers
     })
@@ -116,7 +130,15 @@ do-1() {
 }
 
 do-2() {
-    echo none
+    for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
+        v=2016.06-alpha
+        do-clone $i
+        do-checkout $i $v
+        do-rebuild-pandoc $i $v
+        do-diff-log $i
+        do-push-upstream $i $v
+    done
+    # make update-submodules
 }
 
 gen-css() {

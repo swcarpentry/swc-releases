@@ -129,6 +129,29 @@ do-1() {
     done
 }
 
+do-postBBQ() {
+    for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
+
+        v=2016.06-beta
+        do-clone $i # if not cloned yet (else, comment it)
+
+        do-checkout $i gh-pages $v # branch the latest version, as $v
+        do-rebuild-pandoc # if need to rebuilt (need a recent PANDOC)
+        do-add-css $i $v
+        #do-diff-log $i  # to see what changed
+
+        do-push-upstream $i $v
+        #MOREPUSH=--force     do-push-upstream $i $v    # to force push
+    done
+    echo "If you pushed to all repositories, you can go on with:"
+    echo "make 2016.06-beta"
+    echo "git commit"
+    echo "git push"
+}
+
+
+
+
 do-2() {
     for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
         v=2016.06-alpha

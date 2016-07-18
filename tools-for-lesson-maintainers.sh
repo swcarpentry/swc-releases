@@ -95,10 +95,10 @@ do-build-jekyll() {
     vers=$2
     repo=$(resolve-lesson $as)
     (cd ,,$as && {
-            echo ""                    >> _config.yml
-            echo "github:"             >> _config.yml
-            echo "  url: '/$vers/$as'" >> _config.yml
-            echo ""                    >> _config.yml
+            echo ""        >> _config.yml
+            echo "github:" >> _config.yml
+            echo "  url: '/swc-releases/$vers/$as'" >> _config.yml
+            echo ""        >> _config.yml
             git add _config.yml
 
             make clean site

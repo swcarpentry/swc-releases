@@ -40,7 +40,19 @@ do-checkout() {
             fi
     })
 }
-do-add-css() {
+do-check-justmerged() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <pr>"
+        return
+    fi
+    as=$1
+    pr=$2
+    repo=$(resolve-lesson $as)
+    (cd ,,$as && {
+            git log --oneline  -1 | grep -q "$pr"
+    })
+}
+do-add-csspandoc() {
     if test $# -lt 2 ; then
         echo "Expect <repo> <version>"
         return
@@ -55,12 +67,12 @@ do-add-css() {
                 \cp $css ,,css
                 cat ,,css | awk '/version added automatically/ {exit} {print}' > "$css"
             fi
-            gen-css $vers >> $css
+            gen-css $vers banner >> $css
             git add $css
             git commit $MORECOMMIT -m "Added version ($vers) to all pages via CSS"
     })
 }
-do-rebuild-pandoc() {
+do-rebuild-pandoc() { # old
     if test $# -lt 2 ; then
         echo "Expect <repo> <version>"
         return
@@ -72,6 +84,44 @@ do-rebuild-pandoc() {
             make clean preview
             git add *.html
             git commit -m "Rebuilt HTML files for release $vers"
+    })
+}
+do-build-jekyll() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <version>"
+        return
+    fi
+    as=$1
+    vers=$2
+    repo=$(resolve-lesson $as)
+    (cd ,,$as && {
+            make clean site
+            cd _site
+            find -maxdepth 1 -exec cp -rf {} ../ \; -exec git add ../{} \;
+            git commit \
+                -m "${PREFIXMESSAGE}Rebuilt HTML files for release $vers" \
+                -m "jekyll version: $(jekyll --version)"
+    })
+}
+do-add-css() {
+    if test $# -lt 2 ; then
+        echo "Expect <repo> <version>"
+        return
+    fi
+    as=$1
+    vers=$2
+    repo=$(resolve-lesson $as)
+    css=assets/css/lesson.css
+    (cd ,,$as && {
+            if grep -q 'version added automatically' $css ; then
+                echo "INFO: seems already patched, removing the end of it"
+                \cp $css ,,css
+                cat ,,css | awk '/version added automatically/ {exit} {print}' > "$css"
+                rm -f ,,css
+            fi
+            gen-css $vers navbar-header >> $css
+            git add $css
+            git commit $MORECOMMIT -m "${PREFIXMESSAGE}Added version ($vers) to all pages via CSS"
     })
 }
 do-diff-log() {
@@ -121,7 +171,7 @@ do-1() {
         #do-clone $i
 
         FORCE=1 do-checkout $i v5.3 $v
-        do-add-css $i $v
+        do-add-csspandoc $i $v
         #do-diff-log $i
 
         #MOREPUSH=--force
@@ -129,6 +179,7 @@ do-1() {
     done
 }
 
+# this has not been used in the end
 do-postBBQ() {
     for i in shell-novice git-novice hg-novice sql-novice-survey python-novice-inflammation r-novice-inflammation ; do
 
@@ -137,7 +188,7 @@ do-postBBQ() {
 
         do-checkout $i gh-pages $v # branch the latest version, as $v
         do-rebuild-pandoc # if need to rebuilt (need a recent PANDOC)
-        do-add-css $i $v
+        do-add-csspandoc $i $v
         #do-diff-log $i  # to see what changed
 
         do-push-upstream $i $v
@@ -164,10 +215,49 @@ do-2() {
     # make update-submodules
 }
 
+# for "final" release 2016-06 (in July)
+# changes in templates were just merged and there is a list to check
+do-2016-06-from-gvwilson-list() {
+    # git-novice -> accept 43ab1eb instead of pr 308
+    local corelessonswithcheck="https://github.com/swcarpentry/git-novice,10.5281/zenodo.57467,https://github.com/swcarpentry/git-novice/pull/43ab1eb https://github.com/swcarpentry/hg-novice,10.5281/zenodo.57469,https://github.com/swcarpentry/hg-novice/pull/29 https://github.com/swcarpentry/make-novice,10.5281/zenodo.57473,https://github.com/swcarpentry/make-novice/pull/50 https://github.com/swcarpentry/matlab-novice-inflammation,10.5281/zenodo.57573,https://github.com/swcarpentry/matlab-novice-inflammation/pull/70 https://github.com/swcarpentry/python-novice-inflammation,10.5281/zenodo.57492,https://github.com/swcarpentry/python-novice-inflammation/pull/284 https://github.com/swcarpentry/r-novice-gapminder,10.5281/zenodo.57520,https://github.com/swcarpentry/r-novice-gapminder/pull/169 https://github.com/swcarpentry/r-novice-inflammation,10.5281/zenodo.57541,https://github.com/swcarpentry/r-novice-inflammation/pull/223 https://github.com/swcarpentry/shell-novice,10.5281/zenodo.57544,https://github.com/swcarpentry/shell-novice/pull/426 https://github.com/swcarpentry/sql-novice-survey,10.5281/zenodo.57551,https://github.com/swcarpentry/sql-novice-survey/pull/140 https://github.com/swcarpentry/lesson-example,10.5281/zenodo.58153 https://github.com/swcarpentry/instructor-training,10.5281/zenodo.57571 https://github.com/swcarpentry/workshop-template,10.5281/zenodo.58156"
+    for tuple in $corelessonswithcheck ; do
+        set -- $(echo $tuple | tr ',' ' ')
+        local lesson=${1##https://github.com/swcarpentry/}
+        local doi=${2}
+        local pr=${3##*/}
+        echo ------ $lesson --- $pr --- $doi
+
+        v=2016.06
+        test -d ,,$lesson || do-clone $lesson # lazy clone during tuning
+
+        do-check-justmerged $lesson "$pr" || {
+            echo \"$pr\" not found in latest message
+            return
+        }
+        # branch the latest version, as $v, force it as there are old 2016.06 around
+        FORCE=1 do-checkout $lesson gh-pages $v
+        export PREFIXMESSAGE="[DOI: $doi] "
+        do-build-jekyll $lesson $v
+        do-add-css $lesson $v
+
+        do-push-upstream $lesson $v
+
+        echo "-------"
+    done
+}
+
+do-preview-all-jekyll-in-turn() {
+    for folder in ,,* ; do
+        cd $folder
+        echo "USE CRTL+C TO STOP JEKYLL AND GO TO THE NEXT LESSON"
+        jekyll serve
+        cd -
+    done
+
 gen-css() {
         cat <<EOF
 /* version added automatically */
-div.banner::before {
+div.$2::before {
     content: "Version $1";
     font-size: 10px;
     font-family: monospace;

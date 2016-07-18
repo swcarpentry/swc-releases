@@ -95,6 +95,12 @@ do-build-jekyll() {
     vers=$2
     repo=$(resolve-lesson $as)
     (cd ,,$as && {
+            echo ""                >> _config.yml
+            echo "github:"         >> _config.yml
+            echo "  url: '/$vers'" >> _config.yml
+            echo ""                >> _config.yml
+            git add _config.yml
+
             make clean site
             cd _site
             find -maxdepth 1 -exec cp -rf {} ../ \; -exec git add ../{} \;
@@ -240,6 +246,7 @@ do-2016-06-from-gvwilson-list() {
         do-build-jekyll $lesson $v
         do-add-css $lesson $v
 
+        #MOREPUSH=--force
         do-push-upstream $lesson $v
 
         echo "-------"

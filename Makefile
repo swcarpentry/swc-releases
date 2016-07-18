@@ -8,6 +8,9 @@ CORE_LESSONS_B=git-novice hg-novice make-novice matlab-novice-inflammation pytho
 
 .PHONY: 2015.08 2016.06-alpha 2016.06
 
+nothing:
+	@echo "An target should be explicitly specified."
+
 2015.08:
 	./make-or-update-release.sh $@ ${CORE_LESSONS_A}
 

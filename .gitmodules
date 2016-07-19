@@ -1,27 +1,3 @@
-[submodule "2016.06-alpha/shell-novice"]
-	path = 2016.06-alpha/shell-novice
-	url = https://github.com/swcarpentry/shell-novice
-	branch = 2016.06-alpha
-[submodule "2016.06-alpha/git-novice"]
-	path = 2016.06-alpha/git-novice
-	url = https://github.com/swcarpentry/git-novice
-	branch = 2016.06-alpha
-[submodule "2016.06-alpha/hg-novice"]
-	path = 2016.06-alpha/hg-novice
-	url = https://github.com/swcarpentry/hg-novice
-	branch = 2016.06-alpha
-[submodule "2016.06-alpha/sql-novice-survey"]
-	path = 2016.06-alpha/sql-novice-survey
-	url = https://github.com/swcarpentry/sql-novice-survey
-	branch = 2016.06-alpha
-[submodule "2016.06-alpha/python-novice-inflammation"]
-	path = 2016.06-alpha/python-novice-inflammation
-	url = https://github.com/swcarpentry/python-novice-inflammation
-	branch = 2016.06-alpha
-[submodule "2016.06-alpha/r-novice-inflammation"]
-	path = 2016.06-alpha/r-novice-inflammation
-	url = https://github.com/swcarpentry/r-novice-inflammation
-	branch = 2016.06-alpha
 [submodule "2015.08/shell-novice"]
 	path = 2015.08/shell-novice
 	url = https://github.com/swcarpentry/shell-novice

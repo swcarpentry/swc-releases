@@ -2,14 +2,88 @@
 Container for Software Carpentry lesson releases
 
 - <http://swcarpentry.github.io/swc-releases/2016.06/>
-- <http://swcarpentry.github.io/swc-releases/2016.06-alpha/> (pre-bbq)
+<!-- - <http://swcarpentry.github.io/swc-releases/2016.06-alpha/> (pre-bbq) -->
 - <http://swcarpentry.github.io/swc-releases/2015.08/> (5.3)
 
 
 
 
+# Release Model: how the 2016.06 release was done
 
-# Tentative Instructions for post bbq release
+Generally, the complete release is a two step process:
+
+- branch and build on each lesson, pushing the changes
+- create a folder and submodules, on the swc-releases
+
+Both steps are currently semi-automated.
+Some more details on these two steps are given here.
+
+## Preparing all lessons for the release
+
+This step has been automated by a bash function defined in `tools-for-lesson-maintainers.sh` (swc-releases repository) and that has been run with:
+
+    . tools-for-lesson-maintainers.sh
+    do-2016-06-from-gvwilson-list
+
+This function will do the following for each lesson, e.g., for git-novice with version 2016.06:
+
+- clone the repository as ,,git-novice if not already present (warning: one might need to remove the folder if changes have been push to github since the checkout)
+- create a new branch 2016.06 from the latest gh-pages version
+- build the lesson, setting the Jekyll path to work on the swc-releases site
+- copy the files that were just built and commit them
+- patch the css to show the version number and commit it
+- push the new branch
+
+NB: the two commits are prefixed with the DOI of the lesson.
+
+NB: one need push access rights to all repositories to do that. The alternative is to have individual lesson maintainers do these steps.
+
+The function can be copied and adapted for another new release.
+
+
+## Populating the swc-releases repository
+
+This step has been automated and live in this repository, where the main entry point is the Makefile.
+To make the release, the following commands has been run:
+
+    make 2016.06
+    git commit -m 'Release 2016.06'
+    git push
+
+To be able to run this, the following preparation has been necessary:
+
+- modify the Makefile to add the 2016.06 entry, and creating `CORE_LESSONS_B` (necessary only when the list of lessons changed)
+
+When run, `make 2016.06` will run `make-or-update-release.sh` that will do the following:
+
+- create a `2016.06` folder
+- adding in this folder, one submodule per lesson (that tracks the `2016.06` branch of the lesson repository)
+- generating an (ugly) HTML page `2016.06/index.html`
+- adding everything so it is ready to commit
+- encouraging the user to git commit and push
+
+
+
+# Troubleshooting and help when having to do a release multiple times
+
+## help with preparing lessons
+
+In case the preparation process needs to be re-run, for instance because the build process need to be tuned, one may use the following tools (some functions are defined in `tools-for-lesson-maintainers.sh`).
+
+- `rm -rf ,,*` to remove all checked out lessons: this can be useful if some changes, that needs to be integrated has been pushed on github since the clone
+- `do-reset-,,-to-ghpages` to switch all checked out lesson repositories to the gh-pages branch (in case we want to rerun the script and that the script checks the current state of the repo, as done by the commented-out `do-check-justmerged` in do-2016-06-from-gvwilson-list)
+
+## help with populating swc-releases
+
+- `rm -rf 2016.06` and `make clean-failure` to remove the generated folder and submodules
+- IMPORTANT: also `rm -rf .git/modules/2016.06` to remove the submodule cache, in case some content has been force pushed to the lessons
+- `git rebase -i HEAD^^` and later `git push --force` to rewrite history with a new version
+
+
+
+<!-- old stuff, more detailed but not totally in line with the fact that we now use Jekyll -->
+
+# (old, still somewhat meaningful) Tentative Instructions for post bbq release
 
 These instructions should help doing the release.
 An informed release maintainer can also look at `tools-for-lesson-maintainers.sh` that contains script snippets that aim at automating the process.

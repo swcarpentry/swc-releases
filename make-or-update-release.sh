@@ -108,4 +108,10 @@ echo "</body>" >> index.html
 progress "  - adding index.html to git"
 git add index.html
 
-progress "- FINISHED WITH NO ERRORS (you may review it and commit/push)"
+progress "- FINISHED WITH NO ERRORS"
+progress "  you may review it and commit/push, e.g., with"
+progress ""
+progress "    git status"
+progress "    git commit -m 'Release ${TAG}'"
+progress "    git push"
+progress ""

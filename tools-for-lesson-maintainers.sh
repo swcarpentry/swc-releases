@@ -269,7 +269,12 @@ do-2016-06-from-gvwilson-list() {
 #                 })
 #     done
 # }
-
+do-reset-,,-to-ghpages() {
+    for da in ,,* ; do
+        echo $da
+        git -C $da/ checkout -B gh-pages origin/gh-pages
+    done
+}
 do-preview-all-jekyll-in-turn() {
     for folder in ,,* ; do
         cd $folder

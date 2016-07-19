@@ -2,9 +2,9 @@
 Container for Software Carpentry lesson releases
 
 - <http://swcarpentry.github.io/swc-releases/2016.06/>
-<!-- - <http://swcarpentry.github.io/swc-releases/2016.06-alpha/> (pre-bbq) -->
 - <http://swcarpentry.github.io/swc-releases/2015.08/> (5.3)
 
+<!-- - <http://swcarpentry.github.io/swc-releases/2016.06-alpha/> (pre-bbq) -->
 
 
 

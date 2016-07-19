@@ -23,7 +23,7 @@ nothing:
 update-submodules:
 	#git submodule update --remote -- 2015.08/*
 	#git submodule update --remote -- 2016.06-alpha/*
-	#git submodule update --remote -- 2016.06/*
+	git submodule update --remote -- 2016.06/*
 
 
 # can be useful (especially for development) if a release fails, you delete the subfolder and want to also delete the added submodules etc.

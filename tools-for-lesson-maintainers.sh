@@ -236,22 +236,39 @@ do-2016-06-from-gvwilson-list() {
         v=2016.06
         test -d ,,$lesson || do-clone $lesson # lazy clone during tuning
 
-        do-check-justmerged $lesson "$pr" || {
-            echo \"$pr\" not found in latest message
-            return
-        }
+        #do-check-justmerged $lesson "$pr" || {
+        #    echo \"$pr\" not found in latest message
+        #    return
+        #}
         # branch the latest version, as $v, force it as there are old 2016.06 around
         FORCE=1 do-checkout $lesson gh-pages $v
         export PREFIXMESSAGE="[DOI: $doi] "
         do-build-jekyll $lesson $v
         do-add-css $lesson $v
 
-        #MOREPUSH=--force
+        MOREPUSH=--force READ=echo 
         do-push-upstream $lesson $v
 
         echo "-------"
     done
 }
+# after addition of CITATION
+# do-2016-06-remerge-ghpages() {
+#     for lesson in git-novice hg-novice make-novice matlab-novice-inflammation python-novice-inflammation r-novice-gapminder r-novice-inflammation shell-novice sql-novice-survey lesson-example instructor-training workshop-template ; do
+#         v=2016.06
+#         test -d ,,$lesson || do-clone $lesson # lazy clone during tuning
+#         do-checkout $lesson $v
+#         as=$lesson
+#         vers=$v
+#         (cd ,,$as && {
+#                 git fetch
+#                 git merge 
+#                 gen-css $vers navbar-header >> $css
+#                 git add $css
+#                 git commit $MORECOMMIT -m "${PREFIXMESSAGE}Added version ($vers) to all pages via CSS"
+#                 })
+#     done
+# }
 
 do-preview-all-jekyll-in-turn() {
     for folder in ,,* ; do
@@ -260,6 +277,7 @@ do-preview-all-jekyll-in-turn() {
         jekyll serve
         cd -
     done
+}
 
 gen-css() {
         cat <<EOF

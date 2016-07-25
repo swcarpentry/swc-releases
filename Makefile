@@ -25,6 +25,8 @@ update-submodules:
 	#git submodule update --remote -- 2016.06-alpha/*
 	git submodule update --remote -- 2016.06/*
 
+check-submodules:
+	./check-submodules.sh
 
 # can be useful (especially for development) if a release fails, you delete the subfolder and want to also delete the added submodules etc.
 clean-failure:

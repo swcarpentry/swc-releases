@@ -75,10 +75,12 @@ In case the preparation process needs to be re-run, for instance because the bui
 
 ## help with populating swc-releases
 
+- `make check-submodules` to check that the revisions that submodules reference still exist on github (an absence causes Jekyll build issues)
 - `rm -rf 2016.06` and `make clean-failure` to remove the generated folder and submodules
 - IMPORTANT: also `rm -rf .git/modules/2016.06` to remove the submodule cache, in case some content has been force pushed to the lessons
 - `git rebase -i HEAD^^` and later `git push --force` to rewrite history with a new version
 - `make update-submodules` after uncommenting the necessary line in the Makefile: to update the submodules if new commits have been added to the 2016.06 branches in any lesson repository (need to then add/commit/push)
+
 
 
 <!-- old stuff, more detailed but not totally in line with the fact that we now use Jekyll -->

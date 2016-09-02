@@ -28,11 +28,13 @@ This step has been automated by a bash function defined in `tools-for-lesson-mai
 This function will do the following for each lesson, e.g., for git-novice with version 2016.06:
 
 - clone the repository as ,,git-novice if not already present (warning: one might need to remove the folder if changes have been push to github since the checkout)
-- create a new branch 2016.06 from the latest gh-pages version
+- create a new branch 2016.06 from the latest gh-pages version (see NB)
 - build the lesson, setting the Jekyll path to work on the swc-releases site
 - copy the files that were just built and commit them
 - patch the css to show the version number and commit it
 - push the new branch
+
+NB: WARNING: 2016.06: the `workshop-template` and `lesson-example` should use tags (the script does use branches as of 2016.06) as `import.github.com` does not play well enough with multiple branches. (this warning can be remove if the script is modified to handle this special cases).
 
 NB: the two commits are prefixed with the DOI of the lesson.
 

@@ -21,9 +21,9 @@ nothing:
 	./make-or-update-release.sh $@ ${CORE_LESSONS_B}
 
 update-submodules:
-	#git submodule update --remote -- 2015.08/*
-	#git submodule update --remote -- 2016.06-alpha/*
-	git submodule update --remote -- 2016.06/*
+	#git submodule update --remote -- 2015.08/*/
+	#git submodule update --remote -- 2016.06-alpha/*/
+	git submodule update --remote -- 2016.06/*/
 
 check-submodules:
 	./check-submodules.sh

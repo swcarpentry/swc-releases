@@ -8,6 +8,7 @@ import shutil
 import collections
 import json
 import requests
+import yaml
 
 
 # Main keys used in the ini file
@@ -16,6 +17,7 @@ FOLDER = 'local_folder'
 BASE_SHA = 'base_sha'
 ZENODO_ID = 'zenodo'
 DOI = 'doi'
+FULLTITLE = 'fulltitle'
 # user override keys in the ini file
 FORCE_RECLONE = 'force_clone'
 FORCE_RESHA = 'force_sha'
@@ -138,8 +140,27 @@ def create_missing_zenodo_submission():
             out("got new zenodo id", c[ZENODO_ID])
     save_ini_file(cfg, args.ini_file)
 
-#curl -i -H "Content-Type: application/json" -X POST --data '{"metadata": {"title": "My first upload", "upload_type": "poster", "description": "This is my first upload", "creators": [{"name": "Doe, John", "affiliation": "Zenodo"}]}}'
-
+def guess_informations_from_repository():
+    parser = new_parser_with_ini_file('Creating Zenodo submission for those who have none.')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("EXTRACTING LESSON INFO")
+    for r in cfg.sections():
+        out("***", r)
+        c = cfg[r]
+        with open(c[FOLDER]+"/_config.yml", "r") as jekyll_config:
+            yml = yaml.load(jekyll_config)
+        # title
+        title = yml['title']
+        if r == 'lesson-example': title = "Example Lesson"
+        if r == 'workshop-template': title = "Workshop Template"
+        if yml['carpentry'] == 'swc': title = "Software Carpentry: "+title
+        if yml['carpentry'] == 'dc':  title = "Data Carpentry: "+title
+        if FULLTITLE not in c:
+            print("title:", title)
+            c[FULLTITLE] = title
+        # authors etc
+    save_ini_file(cfg, args.ini_file)
 
 ####################################################
 
@@ -148,6 +169,7 @@ commands_map['ini'] = create_ini_file
 commands_map['clone-missing'] = clone_missing_repositories
 commands_map['fill-missing-sha'] = fill_missing_basesha_with_latest
 commands_map['create-missing-zenodo'] = create_missing_zenodo_submission
+commands_map['guess-info-from-repo'] = guess_informations_from_repository
 
 def usage(info):
     print("USAGE",'('+str(info)+')')

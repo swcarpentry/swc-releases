@@ -5,14 +5,30 @@ import sys
 import os
 import subprocess
 import shutil
+import collections
+import json
+import requests
+
 
 # Main keys used in the ini file
 URL = 'repository_url'
 FOLDER = 'local_folder'
 BASE_SHA = 'base_sha'
-# user override keys
+ZENODO_ID = 'zenodo'
+DOI = 'doi'
+# user override keys in the ini file
 FORCE_RECLONE = 'force_clone'
 FORCE_RESHA = 'force_sha'
+FORCE_REZENODO = 'force_zenodo'
+
+# Private keys (tokens etc)
+ZENODO_SECTION = 'zenodo'
+PRIVATE_SITE = 'site'
+PRIVATE_TOKEN = 'token'
+PRIVATE_INI = 'private.ini' # the file itself
+
+#
+HEADERS_JSON = {"Content-Type": "application/json"}
 
 def create_ini_file():
     preferred_repos = ['hg-novice', 'git-novice', 'make-novice', 'matlab-novice-inflammation', 'python-novice-inflammation', 'r-novice-gapminder', 'r-novice-inflammation', 'shell-novice', 'sql-novice-survey', 'lesson-example', 'instructor-training', 'workshop-template']
@@ -100,19 +116,44 @@ def fill_missing_basesha_with_latest():
         if BASE_SHA not in c or FORCE_RESHA in c:
             sha = gitfor(c, "rev-parse", "gh-pages", getoutput=True)
             c[BASE_SHA] = sha.decode('utf-8').replace('\n', '')
-            out("setting sha", c[BASE_SHA])
+            out("set sha", c[BASE_SHA])
     save_ini_file(cfg, args.ini_file)
 
+def create_missing_zenodo_submission():
+    parser = new_parser_with_ini_file('Creating Zenodo submission for those who have none.')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("CREATING ZENODO ENTRY")
+    zc = read_ini_file(PRIVATE_INI)[ZENODO_SECTION]
+    zenodo_site = zc.get(PRIVATE_SITE) or 'zenodo.org'
+    create_url = 'https://{}/api/deposit/depositions/?access_token={}'.format(zenodo_site, zc[PRIVATE_TOKEN])
+    for r in cfg.sections():
+        out("***", r)
+        c = cfg[r]
+        if ZENODO_ID not in c or FORCE_REZENODO in c:
+            req = requests.post(create_url, data="{}", headers=HEADERS_JSON)
+            json = req.json()
+            c[ZENODO_ID] = str(json['id'])
+            c[DOI] = json['metadata']['prereserve_doi']['doi']
+            out("got new zenodo id", c[ZENODO_ID])
+    save_ini_file(cfg, args.ini_file)
 
-commands_map = {
-'ini': create_ini_file,
-'clone-missing': clone_missing_repositories,
-'fill-missing-sha': fill_missing_basesha_with_latest,
-}
+#curl -i -H "Content-Type: application/json" -X POST --data '{"metadata": {"title": "My first upload", "upload_type": "poster", "description": "This is my first upload", "creators": [{"name": "Doe, John", "affiliation": "Zenodo"}]}}'
+
+
+####################################################
+
+commands_map = collections.OrderedDict()
+commands_map['ini'] = create_ini_file
+commands_map['clone-missing'] = clone_missing_repositories
+commands_map['fill-missing-sha'] = fill_missing_basesha_with_latest
+commands_map['create-missing-zenodo'] = create_missing_zenodo_submission
 
 def usage(info):
     print("USAGE",'('+str(info)+')')
-    print("Available commands:", *commands_map.keys())
+    print("Available commands:")
+    for c in commands_map.keys():
+        print(" -", c)
 
 def main():
     if len(sys.argv) <= 1:

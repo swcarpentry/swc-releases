@@ -9,6 +9,7 @@ import collections
 import json
 import requests
 import yaml
+import re
 
 
 # Main keys used in the ini file
@@ -18,6 +19,7 @@ BASE_SHA = 'base_sha'
 ZENODO_ID = 'zenodo'
 DOI = 'doi'
 FULLTITLE = 'fulltitle'
+MAINTAINERS = 'maintainers'
 # user override keys in the ini file
 FORCE_RECLONE = 'force_clone'
 FORCE_RESHA = 'force_sha'
@@ -31,6 +33,13 @@ PRIVATE_INI = 'private.ini' # the file itself
 
 #
 HEADERS_JSON = {"Content-Type": "application/json"}
+
+def guess_person_name(raw):
+    raw = raw.split(' ')
+    if '.' in raw[0] or '.' in raw[1]:
+        raw = [' '.join(raw[:2])] + raw[3:]
+        print("merged", raw)
+    return raw[0] , ' '.join(raw[1:])
 
 def create_ini_file():
     preferred_repos = ['hg-novice', 'git-novice', 'make-novice', 'matlab-novice-inflammation', 'python-novice-inflammation', 'r-novice-gapminder', 'r-novice-inflammation', 'shell-novice', 'sql-novice-survey', 'lesson-example', 'instructor-training', 'workshop-template']
@@ -157,8 +166,26 @@ def guess_informations_from_repository():
         if yml['carpentry'] == 'swc': title = "Software Carpentry: "+title
         if yml['carpentry'] == 'dc':  title = "Data Carpentry: "+title
         if FULLTITLE not in c:
-            print("title:", title)
             c[FULLTITLE] = title
+            print(FULLTITLE+':', c[FULLTITLE])
+        # maintainers from the readme
+        maintainers = []
+        with open (c[FOLDER]+"/README.md", "r") as readme:
+            mode = 0
+            for l in readme.readlines():
+                l = l.replace('\n', '')
+                if mode==1 and len(l.strip()) > 0: mode = 2
+                if mode==2 and len(l.strip()) == 0: break
+                if mode==2:
+                    if '[' not in l: continue
+                    raw = re.sub(r'''^[^[]*\[([^]]*)\].*$''', r'\1', l)
+                    if '[' in raw: continue # replace failed?
+                    first_name, last_name = guess_person_name(raw)
+                    maintainers.append(last_name + ', ' + first_name)
+                if mode==0 and 'aintainer' in l: mode = 1
+        if MAINTAINERS not in c:
+            c[MAINTAINERS] = ';'.join(maintainers)
+            print(MAINTAINERS+':', c[MAINTAINERS])
         # authors etc
     save_ini_file(cfg, args.ini_file)
 

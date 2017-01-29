@@ -1,12 +1,34 @@
 # swc-releases
 Container for Software Carpentry lesson releases
 
+- <http://swcarpentry.github.io/swc-releases/2017.02/>
 - <http://swcarpentry.github.io/swc-releases/2016.06/>
 - <http://swcarpentry.github.io/swc-releases/2015.08/> (5.3)
 
 <!-- - <http://swcarpentry.github.io/swc-releases/2016.06-alpha/> (pre-bbq) -->
 
 
+# Release Model: as of 2017.02
+
+Pre setup:
+
+- `cp private.teplate.ini private.ini`
+- edit `private.ini` and set your access keys in it
+- use `python3 rel.py 1` to generate a template ini file from the latest version
+- cp `auto.ini 2017.02.ini`
+- install/update some R packages (see below for now)
+
+Fully semi-automated with the following steps:
+
+- use `python3 rel.py A B`, where `B` is your .ini file, and `A` will take the values
+    - `2` to `????`
+
+
+### NB: compared to before
+
+- we are acting the fact that the complete process is done by the releaser (no distinction between the role of lesson maintainers and release creator)
+- we use a descriptor file (that also get enriched), from which we generate the everything (Zenodo, branches, ...)
+- switched to an all-python codebase (no more bash, even though it was convenient)
 
 # Release Model: how the 2016.06 release was done
 
@@ -135,7 +157,7 @@ If the HTML pages were not built yet, do it now and commit with a relevant messa
     git add *.html
     git status
     git commit -m "Rebuilt HTML files for release 2016.06-beta"
-    
+
 Then we will patch the css, so that the version is displayed on all pages.
 Open the `css/swc.css` file and add, at the end, the following block (including the comments):
 
@@ -194,6 +216,3 @@ And finally push:
     git push
 
 After letting some time to github to rebuild the site, you should see the release at <http://swcarpentry.github.io/swc-releases/2016.06-beta/> and each lessons should "work" and have a small banner with the version.
-
-
-

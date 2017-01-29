@@ -183,6 +183,7 @@ def update_zenodo_submission():
             if req.status_code // 100 != 2:
                 out("ERROR:", req.status_code, resp)
             assert c[DOI] == resp['metadata']['prereserve_doi']['doi']
+            assert len(resp['metadata']['communities']) > 0
 
 
 def guess_informations_from_repository():
@@ -238,22 +239,31 @@ def guess_informations_from_repository():
 
 ####################################################
 
+def TODO():
+    print("TODO")
+
 commands_map = collections.OrderedDict()
-def addcmdmap(k, v): commands_map[str(len(commands_map)//2 + 1)] = v ; commands_map[k] = v
+def addcmdmap(k, v, pos=None): commands_map[str(len(commands_map)//2 + 1) if pos is None else pos] = v ; commands_map[k] = v
 addcmdmap('ini', create_ini_file)
+#addcmdmap('ini:dc', TODO, '999')
 addcmdmap('clone-missing', clone_missing_repositories)
 addcmdmap('fill-missing-sha', fill_missing_basesha_with_latest)
 addcmdmap('create-missing-zenodo', create_missing_zenodo_submission)
 addcmdmap('guess-info-from-repo', guess_informations_from_repository)
 addcmdmap('update-all-zenodo', update_zenodo_submission)
+addcmdmap('build-and-patch-lesson', TODO)
+#...
+addcmdmap('make-zenodo-zip', TODO)
+addcmdmap('upload-zenodo-zip', TODO)
 
 def usage(info):
     print("USAGE",'('+str(info)+')')
     print("Available commands:")
     for c in commands_map.keys():
         if str.isdigit(c):
-            print(c, ')', sep='', end='')
-        else: print('', c)
+            if int(c)!=999:
+                print(c, ') ', sep='', end='')
+        else: print(c)
 
 def main():
     if len(sys.argv) <= 1:

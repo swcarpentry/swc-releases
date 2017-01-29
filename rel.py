@@ -176,7 +176,7 @@ def update_zenodo_submission():
             "description": description,
             "contributors": [{"name": m, "type": "Editor"} for m in c[MAINTAINERS].split(';')],
             "creators": [{"name": m} for m in c[AUTHORS].split(';')],
-            "communities": [{"id": "swcarpentry"}], # TODO maybe use c[COMMUNITIES].split... if generalisation is required
+            "communities": [{"identifier": "swcarpentry"}], # TODO maybe use c[COMMUNITIES].split... if generalisation is required
             }}
             req = requests.put(update_url, data=json.dumps(metadata), headers=HEADERS_JSON)
             resp = req.json()

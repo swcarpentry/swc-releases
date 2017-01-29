@@ -16,6 +16,7 @@ import re
 VERSION = 'version'
 URL = 'repository_url'
 FOLDER = 'local_folder'
+ZIP = 'export_zip'
 BASE_SHA = 'base_sha'
 ZENODO_ID = 'zenodo'
 DOI = 'doi'
@@ -85,6 +86,7 @@ def create_ini_file():
         config.add_section(r)
         if args.version is not None:
             config[r][VERSION] = args.version
+            config[r][ZIP] = 'zips/'+r+'-'+args.version+'.zip'
         config[r][URL] = url
         config[r][FOLDER] =  ',,'+r
 
@@ -182,6 +184,7 @@ def set_release_version():
     for r in cfg.sections():
         out("***", r)
         cfg[r][VERSION] = args.version
+        cfg[r][ZIP] = 'zips/'+r+'-'+args.version+'.zip'
     save_ini_file(cfg, args.ini_file)
 
 def create_missing_zenodo_submission():

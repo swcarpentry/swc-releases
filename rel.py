@@ -13,6 +13,7 @@ import re
 
 
 # Main keys used in the ini file
+VERSION = 'version'
 URL = 'repository_url'
 FOLDER = 'local_folder'
 BASE_SHA = 'base_sha'
@@ -48,16 +49,21 @@ def create_ini_file():
     preferred_repos = ['hg-novice', 'git-novice', 'make-novice', 'matlab-novice-inflammation', 'python-novice-inflammation', 'r-novice-gapminder', 'r-novice-inflammation', 'shell-novice', 'sql-novice-survey', 'lesson-example', 'instructor-training', 'workshop-template']
     preferred_ini = 'auto.ini'
 
+    parser = argparse.ArgumentParser("Create a skeleton ini file (to copy and edit)")
+    parser.add_argument('--version', default=None)
+    args = parser.parse_args(sys.argv[1:])
+
     config = configparser.ConfigParser()
     for r in preferred_repos:
         if r.startswith('dc:'):
             url = "git@github.com:datacarpentry/" + r[3:] + ".git"
         else:
             url = "git@github.com:swcarpentry/" + r + ".git"
-        config[r] = {
-        URL: url,
-        FOLDER: ',,'+r,
-        }
+        config.add_section(r)
+        if args.version is not None:
+            config[r][VERSION] = args.version
+        config[r][URL] = url
+        config[r][FOLDER] =  ',,'+r
 
     save_ini_file(config, preferred_ini)
 
@@ -131,6 +137,17 @@ def fill_missing_basesha_with_latest():
             sha = gitfor(c, "rev-parse", "gh-pages", getoutput=True)
             c[BASE_SHA] = sha.decode('utf-8').replace('\n', '')
             out("set sha", c[BASE_SHA])
+    save_ini_file(cfg, args.ini_file)
+
+def set_release_version():
+    parser = new_parser_with_ini_file('Changes the version in the ini file, for all.')
+    parser.add_argument('version')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("SETTING VERSION", args.version)
+    for r in cfg.sections():
+        out("***", r)
+        cfg[r][VERSION] = args.version
     save_ini_file(cfg, args.ini_file)
 
 def create_missing_zenodo_submission():
@@ -251,6 +268,7 @@ addcmdmap('fill-missing-sha', fill_missing_basesha_with_latest)
 addcmdmap('create-missing-zenodo', create_missing_zenodo_submission)
 addcmdmap('guess-info-from-repo', guess_informations_from_repository)
 addcmdmap('update-all-zenodo', update_zenodo_submission)
+addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('build-and-patch-lesson', TODO)
 #...
 addcmdmap('make-zenodo-zip', TODO)

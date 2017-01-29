@@ -20,6 +20,7 @@ ZENODO_ID = 'zenodo'
 DOI = 'doi'
 FULLTITLE = 'fulltitle'
 MAINTAINERS = 'maintainers'
+AUTHORS = 'authors'
 # user override keys in the ini file
 FORCE_RECLONE = 'force_clone'
 FORCE_RESHA = 'force_sha'
@@ -186,7 +187,18 @@ def guess_informations_from_repository():
         if MAINTAINERS not in c:
             c[MAINTAINERS] = ';'.join(maintainers)
             print(MAINTAINERS+':', c[MAINTAINERS])
-        # authors etc
+        # authors from the AUTHORS file
+        # cat ,,*/AUTHORS |sort |uniq|grep -v '^[^ ]* [^ ]*$'
+        authors = []
+        with open (c[FOLDER]+"/AUTHORS", "r") as readme:
+            for l in readme.readlines():
+                l = l.replace('\n', '')
+                if len(l.strip()) == 0: continue
+                first_name, last_name = guess_person_name(l)
+                authors.append(last_name + ', ' + first_name)
+        if AUTHORS not in c:
+            c[AUTHORS] = ';'.join(authors)
+            print(AUTHORS+':', c[AUTHORS])
     save_ini_file(cfg, args.ini_file)
 
 ####################################################

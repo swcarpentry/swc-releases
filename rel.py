@@ -41,9 +41,12 @@ PRIVATE_INI = 'private.ini' # the file itself
 #
 HEADERS_JSON = {"Content-Type": "application/json"}
 
-def gen_css(vers, clazz):
+def gen_css(vers, clazz, doi):
     return """
 /* version added automatically */
+div.{2}:hover::before {0}
+    content: "{4}";
+{3}
 div.{2}::before {0}
     content: "Version {1}";
     font-size: 10px;
@@ -60,7 +63,7 @@ div.{2}::before {0}
     background: rgb(43, 57, 144);
     padding: 3px;
     border: 1px solid white;
-{3}""".format('{', vers, clazz, '}')
+{3}""".format('{', vers, clazz, '}', doi)
 
 
 def guess_person_name(raw):
@@ -300,6 +303,7 @@ def branch_build_and_patch_lesson():
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
     out("BUILDING LESSON")
+    more = []
     for r in cfg.sections():
         out("***", r)
         c = cfg[r]
@@ -315,7 +319,9 @@ def branch_build_and_patch_lesson():
             if FORCE_REBRANCH not in c:
                 continue
             out("recreating branch")
+            print(c[BASE_SHA])
             gitfor(c, 'checkout', '-B', c[VERSION], c[BASE_SHA])
+            more += ['--force']
         else:
             out("creating branch")
             gitfor(c, 'checkout', '-b', c[VERSION], c[BASE_SHA])
@@ -335,13 +341,13 @@ def branch_build_and_patch_lesson():
         out("adding CSS")
         # TODO remove added css so it can be idempotent (not that useful if it remains deep in the build process though)
         gitfor(c, 'add', cssfile)
-        csscontent = gen_css(vers, 'navbar-header')
+        csscontent = gen_css(vers, 'navbar-header', messageprefix)
         with open(c[FOLDER]+'/'+cssfile, 'a') as cssappend:
             cssappend.write(csscontent)
         gitfor(c, 'add', cssfile)
         gitfor(c, 'commit', '-m', messageprefix+'Added version ('+vers+') to all pages via CSS')
         out("pushing?")
-        gitfor(c, 'push', '--set-upstream', 'origin', vers)
+        gitfor(c, 'push', *more, '--set-upstream', 'origin', vers)
 
 def make_zenodo_zip():
     parser = new_parser_with_ini_file('Make the zip for Zenodo')

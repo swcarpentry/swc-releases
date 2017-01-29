@@ -339,7 +339,18 @@ def branch_build_and_patch_lesson():
         out("pushing?")
         gitfor(c, 'push', '--set-upstream', 'origin', vers)
 
+def make_zenodo_zip():
+    parser = new_parser_with_ini_file('Make the zip for Zenodo')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("ZIPPING LESSON")
+    for r in cfg.sections():
+        out("***", r)
+        c = cfg[r]
+        vers = c[VERSION]
+        zipname = c[ZIP]
 
+        gitfor(c, 'archive', '-o', '../'+zipname, '--prefix', r+'/', '-1', vers)
 
 
 ####################################################
@@ -362,7 +373,7 @@ addcmdmap('update-all-zenodo', update_zenodo_submission)
 addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('build-and-patch-lesson-branch', branch_build_and_patch_lesson)
 #...
-addcmdmap('make-zenodo-zip', TODO)
+addcmdmap('make-zenodo-zip', make_zenodo_zip)
 addcmdmap('upload-zenodo-zip', TODO)
 
 def usage(info):

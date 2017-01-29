@@ -171,32 +171,32 @@ def guess_informations_from_repository():
             print(FULLTITLE+':', c[FULLTITLE])
         # maintainers from the readme
         maintainers = []
-        with open (c[FOLDER]+"/README.md", "r") as readme:
-            mode = 0
-            for l in readme.readlines():
-                l = l.replace('\n', '')
-                if mode==1 and len(l.strip()) > 0: mode = 2
-                if mode==2 and len(l.strip()) == 0: break
-                if mode==2:
-                    if '[' not in l: continue
-                    raw = re.sub(r'''^[^[]*\[([^]]*)\].*$''', r'\1', l)
-                    if '[' in raw: continue # replace failed?
-                    first_name, last_name = guess_person_name(raw)
-                    maintainers.append(last_name + ', ' + first_name)
-                if mode==0 and 'aintainer' in l: mode = 1
         if MAINTAINERS not in c:
+            with open (c[FOLDER]+"/README.md", "r") as readme:
+                mode = 0
+                for l in readme.readlines():
+                    l = l.replace('\n', '')
+                    if mode==1 and len(l.strip()) > 0: mode = 2
+                    if mode==2 and len(l.strip()) == 0: break
+                    if mode==2:
+                        if '[' not in l: continue
+                        raw = re.sub(r'''^[^[]*\[([^]]*)\].*$''', r'\1', l)
+                        if '[' in raw: continue # replace failed?
+                        first_name, last_name = guess_person_name(raw)
+                        maintainers.append(last_name + ', ' + first_name)
+                    if mode==0 and 'aintainer' in l: mode = 1
             c[MAINTAINERS] = ';'.join(maintainers)
             print(MAINTAINERS+':', c[MAINTAINERS])
         # authors from the AUTHORS file
         # cat ,,*/AUTHORS |sort |uniq|grep -v '^[^ ]* [^ ]*$'
         authors = []
-        with open (c[FOLDER]+"/AUTHORS", "r") as readme:
-            for l in readme.readlines():
-                l = l.replace('\n', '')
-                if len(l.strip()) == 0: continue
-                first_name, last_name = guess_person_name(l)
-                authors.append(last_name + ', ' + first_name)
         if AUTHORS not in c:
+            with open (c[FOLDER]+"/AUTHORS", "r") as readme:
+                for l in readme.readlines():
+                    l = l.replace('\n', '')
+                    if len(l.strip()) == 0: continue
+                    first_name, last_name = guess_person_name(l)
+                    authors.append(last_name + ', ' + first_name)
             c[AUTHORS] = ';'.join(authors)
             print(AUTHORS+':', c[AUTHORS])
     save_ini_file(cfg, args.ini_file)
@@ -204,17 +204,20 @@ def guess_informations_from_repository():
 ####################################################
 
 commands_map = collections.OrderedDict()
-commands_map['ini'] = create_ini_file
-commands_map['clone-missing'] = clone_missing_repositories
-commands_map['fill-missing-sha'] = fill_missing_basesha_with_latest
-commands_map['create-missing-zenodo'] = create_missing_zenodo_submission
-commands_map['guess-info-from-repo'] = guess_informations_from_repository
+def addcmdmap(k, v): commands_map[str(len(commands_map)//2 + 1)] = v ; commands_map[k] = v
+addcmdmap('ini', create_ini_file)
+addcmdmap('clone-missing', clone_missing_repositories)
+addcmdmap('fill-missing-sha', fill_missing_basesha_with_latest)
+addcmdmap('create-missing-zenodo', create_missing_zenodo_submission)
+addcmdmap('guess-info-from-repo', guess_informations_from_repository)
 
 def usage(info):
     print("USAGE",'('+str(info)+')')
     print("Available commands:")
     for c in commands_map.keys():
-        print(" -", c)
+        if str.isdigit(c):
+            print(c, ')', sep='', end='')
+        else: print('', c)
 
 def main():
     if len(sys.argv) <= 1:

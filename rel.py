@@ -26,6 +26,8 @@ FORCE_RECLONE = 'force_clone'
 FORCE_RESHA = 'force_sha'
 FORCE_REZENODO = 'force_zenodo'
 
+GLOBAL_INI = 'global.ini' # global mappings
+
 # Private keys (tokens etc)
 ZENODO_SECTION = 'zenodo'
 PRIVATE_SITE = 'site'
@@ -150,6 +152,39 @@ def create_missing_zenodo_submission():
             out("got new zenodo id", c[ZENODO_ID])
     save_ini_file(cfg, args.ini_file)
 
+
+def update_zenodo_submission():
+    parser = new_parser_with_ini_file('Filling Zenodo submissions.')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("UPDATING ZENODO ENTRY")
+    zc = read_ini_file(PRIVATE_INI)[ZENODO_SECTION]
+    zenodo_site = zc.get(PRIVATE_SITE) or 'zenodo.org'
+    dc = read_ini_file(GLOBAL_INI)['description']
+    for r in cfg.sections():
+        out("***", r)
+        c = cfg[r]
+        if ZENODO_ID in c:
+            update_url = 'https://{}/api/deposit/depositions/{}?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
+            description = ''.join([dc[n] for n in dc.keys() if n in c[URL]])
+            if len(description) == 0:
+                description = "TODO DESCRIPTION"
+                out("!!! missing description")
+            metadata = {"metadata": {
+            "title": c[FULLTITLE],
+            "upload_type": "lesson",
+            "description": description,
+            "contributors": [{"name": m, "type": "Editor"} for m in c[MAINTAINERS].split(';')],
+            "creators": [{"name": m} for m in c[AUTHORS].split(';')],
+            "communities": [{"id": "swcarpentry"}], # TODO maybe use c[COMMUNITIES].split... if generalisation is required
+            }}
+            req = requests.put(update_url, data=json.dumps(metadata), headers=HEADERS_JSON)
+            resp = req.json()
+            if req.status_code // 100 != 2:
+                out("ERROR:", req.status_code, resp)
+            assert c[DOI] == resp['metadata']['prereserve_doi']['doi']
+
+
 def guess_informations_from_repository():
     parser = new_parser_with_ini_file('Creating Zenodo submission for those who have none.')
     args = parser.parse_args(sys.argv[1:])
@@ -210,6 +245,7 @@ addcmdmap('clone-missing', clone_missing_repositories)
 addcmdmap('fill-missing-sha', fill_missing_basesha_with_latest)
 addcmdmap('create-missing-zenodo', create_missing_zenodo_submission)
 addcmdmap('guess-info-from-repo', guess_informations_from_repository)
+addcmdmap('update-all-zenodo', update_zenodo_submission)
 
 def usage(info):
     print("USAGE",'('+str(info)+')')

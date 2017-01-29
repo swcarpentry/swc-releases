@@ -38,7 +38,7 @@ HEADERS_JSON = {"Content-Type": "application/json"}
 def guess_person_name(raw):
     raw = raw.split(' ')
     if '.' in raw[0] or '.' in raw[1]:
-        raw = [' '.join(raw[:2])] + raw[3:]
+        raw = [' '.join(raw[:2])] + raw[2:]
         print("merged", raw)
     return raw[0] , ' '.join(raw[1:])
 

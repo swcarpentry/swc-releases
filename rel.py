@@ -20,6 +20,7 @@ ZIP = 'export_zip'
 BASE_SHA = 'base_sha'
 ZENODO_ID = 'zenodo'
 DOI = 'doi'
+ZENODO_FILE_ID = 'zenodo_file'
 FULLTITLE = 'fulltitle'
 MAINTAINERS = 'maintainers'
 AUTHORS = 'authors'
@@ -173,10 +174,11 @@ def fill_missing_basesha_with_latest():
             sha = gitfor(c, "rev-parse", "gh-pages", getoutput=True)
             c[BASE_SHA] = sha.decode('utf-8').replace('\n', '')
             out("set sha", c[BASE_SHA])
-    save_ini_file(cfg, args.ini_file)
+        # save each time
+        save_ini_file(cfg, args.ini_file)
 
 def set_release_version():
-    parser = new_parser_with_ini_file('Changes the version in the ini file, for all.')
+    parser = new_parser_with_ini_file('Changes the version in the ini file and the zip path, for all.')
     parser.add_argument('version')
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
@@ -204,7 +206,8 @@ def create_missing_zenodo_submission():
             c[ZENODO_ID] = str(json['id'])
             c[DOI] = json['metadata']['prereserve_doi']['doi']
             out("got new zenodo id", c[ZENODO_ID])
-    save_ini_file(cfg, args.ini_file)
+        # save each time
+        save_ini_file(cfg, args.ini_file)
 
 
 def update_zenodo_submission():
@@ -289,7 +292,8 @@ def guess_informations_from_repository():
                     authors.append(last_name + ', ' + first_name)
             c[AUTHORS] = ';'.join(authors)
             print(AUTHORS+':', c[AUTHORS])
-    save_ini_file(cfg, args.ini_file)
+        # save each time
+        save_ini_file(cfg, args.ini_file)
 
 def branch_build_and_patch_lesson():
     parser = new_parser_with_ini_file('Branch the lesson, build it, patch it, etc.')
@@ -352,6 +356,75 @@ def make_zenodo_zip():
 
         gitfor(c, 'archive', '-o', '../'+zipname, '--prefix', r+'/', '-1', vers)
 
+def upload_zenodo_zip():
+    parser = new_parser_with_ini_file('Adding zip files to Zenodo submissions.')
+    parser.add_argument('--force-replace', dest='force_replace', action='store_true')
+    parser.set_defaults(force_replace=False)
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("UPLOADING ZIP TO ZENODO")
+    zc = read_ini_file(PRIVATE_INI)[ZENODO_SECTION]
+    zenodo_site = zc.get(PRIVATE_SITE) or 'zenodo.org'
+    dc = read_ini_file(GLOBAL_INI)['description']
+    for r in cfg.sections():
+        out("***", r)
+        c = cfg[r]
+        if ZENODO_ID not in c or not os.path.exists(c[ZIP]):
+            out("... skipping")
+            continue
+
+        # check there are actually no files on zenodo
+        list_url = 'https://{}/api/deposit/depositions/{}/files?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
+        req = requests.get(list_url)
+        resp = req.json()
+        if len(resp) == 1:
+            if ZENODO_FILE_ID not in c:
+                if args.force_replace:
+                    out("... there is a file already on zenodo, removing it (due to --force-replace)")
+                    requests.delete(resp[0]['links']['self']+'?access_token='+zc[PRIVATE_TOKEN])
+                    # go on with the upload
+                else:
+                    out("... there is a file already on zenodo, getting it's id")
+                    c[ZENODO_FILE_ID] = resp[0]['id']
+                    continue
+            else:
+                if c[ZENODO_FILE_ID] == resp[0]['id']:
+                    out("... there is a file already on zenodo, with the same id, keeping it")
+                else:
+                    out("... there is a file already on zenodo, with a different id, skipping !!!!!!!!!!!")
+                    out("    remote: ", resp[0]['id'])
+                continue
+        if len(resp) > 1:
+            out("... there are multiple files already on zenodo, skipping")
+            continue
+
+        # do upload the file
+        with open(c[ZIP], 'rb') as zipfile:
+            data = {'filename': re.sub(r'^.*/', '', c[ZIP])}
+            files = {'file': zipfile}
+
+            if ZENODO_FILE_ID in c:
+                upd_url = 'https://{}/api/deposit/depositions/{}/files/{}?access_token={}'.format(zenodo_site, c[ZENODO_ID], c[ZENODO_FILE_ID], zc[PRIVATE_TOKEN])
+                out("... not replacing existing file")
+                # put
+                continue
+
+            fsize = os.path.getsize(c[ZIP])
+            out("... uploading around {}MB".format(fsize/1000/1000))
+
+            add_url = list_url
+            req = requests.post(add_url, data=data, files=files)
+            resp = req.json()
+            if req.status_code // 100 != 2:
+                out("ERROR:", req.status_code, resp)
+            c[ZENODO_FILE_ID] = resp['id']
+            out(ZENODO_FILE_ID+':', c[ZENODO_FILE_ID])
+
+        # save each time
+        save_ini_file(cfg, args.ini_file)
+    # and at the end (needed due to the complicated logic and "continue" above)
+    save_ini_file(cfg, args.ini_file)
+
 
 ####################################################
 
@@ -372,9 +445,8 @@ addcmdmap('guess-info-from-repo', guess_informations_from_repository)
 addcmdmap('update-all-zenodo', update_zenodo_submission)
 addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('build-and-patch-lesson-branch', branch_build_and_patch_lesson)
-#...
 addcmdmap('make-zenodo-zip', make_zenodo_zip)
-addcmdmap('upload-zenodo-zip', TODO)
+addcmdmap('upload-zenodo-zip', upload_zenodo_zip)
 
 def usage(info):
     print("USAGE",'('+str(info)+')')

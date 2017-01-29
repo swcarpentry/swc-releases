@@ -10,18 +10,25 @@ Container for Software Carpentry lesson releases
 
 # Release Model: as of 2017.02
 
+Pre task: ensure AUTHORS are ok in all repositories
+
 Pre setup:
 
 - `cp private.teplate.ini private.ini`
 - edit `private.ini` and set your access keys in it
-- use `python3 rel.py 1` to generate a template ini file from the latest version
-- cp `auto.ini 2017.02.ini`
 - install/update some R packages (see below for now)
+- use `python3 rel.py 1 --version 2017.02` to generate a template ini file from the latest version
+- cp `auto.ini 2017.02.ini` (you might edit this file or the generator code if you need fine tuning)
 
 Fully semi-automated with the following steps:
 
-- use `python3 rel.py A B`, where `B` is your .ini file, and `A` will take the values
-    - `2` to `????`
+- use `python3 rel.py A B ...`, where `B` is your .ini file, and `A` will take the values
+    - `2` will clone the repositories, you can pass a git depth with '--depth' to make the clone faster/smaller
+    - `3` will get the sha1 corresponding to the tip of `gh-pages`, you can then edit the .ini file if you want to release older versions for certain repositories
+    - `4` will create the (empty) zenodo submissions, adding some identifiers in the .ini file
+    - `5` will gather info from the repositories, filling the the .ini with it
+    - `6` will fill-in or update the zenodo submissions
+    - `7` will create the branches, build the lessons, and push
 
 
 ### NB: compared to before

@@ -140,6 +140,7 @@ def out(*args):
 
 def clone_missing_repository():
     parser = new_parser_with_ini_file('Clone the repositories that are not already present.')
+    parser.add_argument('--depth', default=None)
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
     out("CLONING")
@@ -153,7 +154,10 @@ def clone_missing_repository():
         if os.path.isdir(c[FOLDER]):
             out("skipped...")
         else:
-            git("clone", c[URL], c[FOLDER])
+            if args.depth is None:
+                git("clone", c[URL], c[FOLDER])
+            else:
+                git("clone", "--depth", args.depth, c[URL], c[FOLDER])
 
 def fill_missing_basesha_with_latest():
     parser = new_parser_with_ini_file('Adds the base sha in the ini file, for those who are not present.')
@@ -330,12 +334,8 @@ def branch_build_and_patch_lesson():
         gitfor(c, 'add', cssfile)
         gitfor(c, 'commit', '-m', messageprefix+'Added version ('+vers+') to all pages via CSS')
         out("pushing?")
+        gitfor(c, 'push', '--set-upstream', 'origin', vers)
 
-        # if BASE_SHA not in c or FORCE_RESHA in c:
-        #     sha = gitfor(c, "rev-parse", "gh-pages", getoutput=True)
-        #     c[BASE_SHA] = sha.decode('utf-8').replace('\n', '')
-        #     out("set sha", c[BASE_SHA])
-    #save_ini_file(cfg, args.ini_file)
 
 
 
@@ -345,7 +345,10 @@ def TODO():
     print("TODO")
 
 commands_map = collections.OrderedDict()
-def addcmdmap(k, v, pos=None): commands_map[str(len(commands_map)//2 + 1) if pos is None else pos] = v ; commands_map[k] = v
+def addcmdmap(k, v, pos=None):
+    ind = str(len([k for k in commands_map.keys() if str.isdigit(k) and int(k)!=999]) + 1)
+    commands_map[ind if pos is None else pos] = v
+    commands_map[k] = v
 addcmdmap('ini', create_ini_file)
 #addcmdmap('ini:dc', TODO, '999')
 addcmdmap('clone-missing', clone_missing_repository)

@@ -371,7 +371,6 @@ def upload_zenodo_zip():
     out("UPLOADING ZIP TO ZENODO")
     zc = read_ini_file(PRIVATE_INI)[ZENODO_SECTION]
     zenodo_site = zc.get(PRIVATE_SITE) or 'zenodo.org'
-    dc = read_ini_file(GLOBAL_INI)['description']
     for r in cfg.sections():
         out("***", r)
         c = cfg[r]
@@ -431,6 +430,23 @@ def upload_zenodo_zip():
     # and at the end (needed due to the complicated logic and "continue" above)
     save_ini_file(cfg, args.ini_file)
 
+def publish_zenodo_submission():
+    parser = new_parser_with_ini_file('PUBLISHING Zenodo submissions (cannot be deleted afterwards).')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("PUBLISHING THE ZENODO SUBMISSION")
+    zc = read_ini_file(PRIVATE_INI)[ZENODO_SECTION]
+    zenodo_site = zc.get(PRIVATE_SITE) or 'zenodo.org'
+    for r in cfg.sections():
+        out("***", r)
+        c = cfg[r]
+        if ZENODO_ID not in c:
+            out("... skipping")
+            continue
+
+        # check there are actually no files on zenodo
+        pub_url = 'https://{}/api/deposit/depositions/{}/actions/publish?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
+        req = requests.post(pub_url)
 
 ####################################################
 
@@ -443,16 +459,19 @@ def addcmdmap(k, v, pos=None):
     commands_map[ind if pos is None else pos] = v
     commands_map[k] = v
 addcmdmap('ini', create_ini_file)
-#addcmdmap('ini:dc', TODO, '999')
+#addcmdmap('ini:dc', TODO, '999') # TODO generalization
+addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('clone-missing', clone_missing_repository)
 addcmdmap('fill-missing-sha', fill_missing_basesha_with_latest)
 addcmdmap('create-missing-zenodo', create_missing_zenodo_submission)
 addcmdmap('guess-info-from-repo', guess_informations_from_repository)
 addcmdmap('update-all-zenodo', update_zenodo_submission)
-addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('build-and-patch-lesson-branch', branch_build_and_patch_lesson)
 addcmdmap('make-zenodo-zip', make_zenodo_zip)
 addcmdmap('upload-zenodo-zip', upload_zenodo_zip)
+#
+addcmdmap('final-publish-zenodo', publish_zenodo_submission, '999')
+
 
 def usage(info):
     print("USAGE",'('+str(info)+')')

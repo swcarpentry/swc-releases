@@ -31,7 +31,7 @@ Fully semi-automated with the following steps:
     - `7` will create the branches, build the lessons, and push
     - `8` will zip the lessons into the `zips/` folder (by default)
     - `9` will upload the zips to Zenodo, you can later re-upload by removing the `zenodo_file` in the ini file, and pass `--force-replace`
-
+    - `final-publish-zenodo` to publish Zenodo submissions, meaning they won't be deletable afterwards
 
 ### NB: compared to before
 

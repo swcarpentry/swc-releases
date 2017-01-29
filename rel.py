@@ -26,6 +26,7 @@ AUTHORS = 'authors'
 FORCE_RECLONE = 'force_clone'
 FORCE_RESHA = 'force_sha'
 FORCE_REZENODO = 'force_zenodo'
+FORCE_REBRANCH = 'force_branch'
 
 GLOBAL_INI = 'global.ini' # global mappings
 
@@ -37,6 +38,28 @@ PRIVATE_INI = 'private.ini' # the file itself
 
 #
 HEADERS_JSON = {"Content-Type": "application/json"}
+
+def gen_css(vers, clazz):
+    return """
+/* version added automatically */
+div.{2}::before {0}
+    content: "Version {1}";
+    font-size: 10px;
+    font-family: monospace;
+    font-weight: bold;
+    line-height: 1;
+    /* */
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 10;
+    /* */
+    color: white;
+    background: rgb(43, 57, 144);
+    padding: 3px;
+    border: 1px solid white;
+{3}""".format('{', vers, clazz, '}')
+
 
 def guess_person_name(raw):
     raw = raw.split(' ')
@@ -80,25 +103,32 @@ def read_ini_file(ini_file):
     cfg.read(ini_file)
     return cfg
 
+def cmd(*args, **kwargs):
+    kwmore = {}
+    if 'cwd' in kwargs: kwmore['cwd'] = kwargs['cwd']
+
+    if 'getoutput' in kwargs:
+        res = subprocess.check_output(args, **kwmore)
+    else:
+        res = subprocess.call(args, **kwmore)
+        if res != 0 and 'noerror' not in kwargs:
+            out("!!! ", *args, "RETURNED", res)
+            exit(1)
+    return res
+
 def git(*args, **kwargs):
     cmd = ["git"] + list(args)
     if 'getoutput' in kwargs:
         res = subprocess.check_output(cmd)
     else:
-        res = subprocess.call()
-        if res != 0:
+        res = subprocess.call(cmd)
+        if res != 0 and 'noerror' not in kwargs:
             out("!!! git", *args, "RETURNED", res)
     return res
 
 def gitfor(c, *args, **kwargs):
-    cmd = ["git", "-C", c[FOLDER]] + list(args)
-    if 'getoutput' in kwargs:
-        res = subprocess.check_output(cmd)
-    else:
-        res = subprocess.call(cmd)
-        if res != 0:
-            out("!!! git -C", c[FOLDER], *args, "RETURNED", res)
-    return res
+    more = ['-C', c[FOLDER]] + list(args)
+    return git(*more, **kwargs)
 
 def new_parser_with_ini_file(*args, **kwargs):
     parser = argparse.ArgumentParser(*args, **kwargs)
@@ -108,7 +138,7 @@ def new_parser_with_ini_file(*args, **kwargs):
 def out(*args):
     print(*(["#### "] + list(args) + [" ####"]))
 
-def clone_missing_repositories():
+def clone_missing_repository():
     parser = new_parser_with_ini_file('Clone the repositories that are not already present.')
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
@@ -193,7 +223,7 @@ def update_zenodo_submission():
             "description": description,
             "contributors": [{"name": m, "type": "Editor"} for m in c[MAINTAINERS].split(';')],
             "creators": [{"name": m} for m in c[AUTHORS].split(';')],
-            "communities": [{"identifier": "swcarpentry"}], # TODO maybe use c[COMMUNITIES].split... if generalisation is required
+            "communities": [{"identifier": "swcarpentry"}], # TODO maybe use c[COMMUNITIES].split... if generalization is required
             }}
             req = requests.put(update_url, data=json.dumps(metadata), headers=HEADERS_JSON)
             resp = req.json()
@@ -254,6 +284,61 @@ def guess_informations_from_repository():
             print(AUTHORS+':', c[AUTHORS])
     save_ini_file(cfg, args.ini_file)
 
+def branch_build_and_patch_lesson():
+    parser = new_parser_with_ini_file('Branch the lesson, build it, patch it, etc.')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    out("BUILDING LESSON")
+    for r in cfg.sections():
+        out("***", r)
+        c = cfg[r]
+        vers = c[VERSION]
+        messageprefix = '[DOI: {}] '.format(c[DOI])
+        jekyllversion = cmd('jekyll', '--version', getoutput=True)
+        jekyllversion = jekyllversion.decode('utf-8').replace('\n', '')
+        cssfile = 'assets/css/lesson.css'
+        # make branch
+        out("testing for the presence of ", vers)
+        if gitfor(c, 'rev-parse', vers, '--', noerror=True) == 0:
+            out("version ", vers, 'already exist')
+            if FORCE_REBRANCH not in c:
+                continue
+            out("recreating branch")
+            gitfor(c, 'checkout', '-B', c[VERSION], c[BASE_SHA])
+        else:
+            out("creating branch")
+            gitfor(c, 'checkout', '-b', c[VERSION], c[BASE_SHA])
+        # build etc
+        out("building jekyll lesson")
+        with open(c[FOLDER]+"/_config.yml", "a") as jekyll_config:
+            jekyll_config.write("\n")
+            jekyll_config.write("github:\n")
+            # TODO may need to tune this swc-releases for generalization
+            jekyll_config.write("  url: '/swc-releases/{}/{}'\n".format(vers, r))
+            jekyll_config.write("\n")
+        cmd('make', 'clean', 'site', cwd=c[FOLDER])
+        cmd('find', '.', '-maxdepth', '1', '-exec', 'cp', '-rf', '{}', '../', ';', '-exec', 'git', 'add', '../{}', ';', cwd=c[FOLDER]+'/_site')
+        gitfor(c, 'commit',
+                  '-m', messageprefix+"Rebuilt HTML files for release "+vers,
+                  '-m', 'jekyll version: '+jekyllversion)
+        out("adding CSS")
+        # TODO remove added css so it can be idempotent (not that useful if it remains deep in the build process though)
+        gitfor(c, 'add', cssfile)
+        csscontent = gen_css(vers, 'navbar-header')
+        with open(c[FOLDER]+'/'+cssfile, 'a') as cssappend:
+            cssappend.write(csscontent)
+        gitfor(c, 'add', cssfile)
+        gitfor(c, 'commit', '-m', messageprefix+'Added version ('+vers+') to all pages via CSS')
+        out("pushing?")
+
+        # if BASE_SHA not in c or FORCE_RESHA in c:
+        #     sha = gitfor(c, "rev-parse", "gh-pages", getoutput=True)
+        #     c[BASE_SHA] = sha.decode('utf-8').replace('\n', '')
+        #     out("set sha", c[BASE_SHA])
+    #save_ini_file(cfg, args.ini_file)
+
+
+
 ####################################################
 
 def TODO():
@@ -263,13 +348,13 @@ commands_map = collections.OrderedDict()
 def addcmdmap(k, v, pos=None): commands_map[str(len(commands_map)//2 + 1) if pos is None else pos] = v ; commands_map[k] = v
 addcmdmap('ini', create_ini_file)
 #addcmdmap('ini:dc', TODO, '999')
-addcmdmap('clone-missing', clone_missing_repositories)
+addcmdmap('clone-missing', clone_missing_repository)
 addcmdmap('fill-missing-sha', fill_missing_basesha_with_latest)
 addcmdmap('create-missing-zenodo', create_missing_zenodo_submission)
 addcmdmap('guess-info-from-repo', guess_informations_from_repository)
 addcmdmap('update-all-zenodo', update_zenodo_submission)
 addcmdmap('set-release-version', set_release_version, '999')
-addcmdmap('build-and-patch-lesson', TODO)
+addcmdmap('build-and-patch-lesson-branch', branch_build_and_patch_lesson)
 #...
 addcmdmap('make-zenodo-zip', TODO)
 addcmdmap('upload-zenodo-zip', TODO)

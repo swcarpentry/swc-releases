@@ -215,6 +215,8 @@ def create_missing_zenodo_submission():
 
 def update_zenodo_submission():
     parser = new_parser_with_ini_file('Filling Zenodo submissions.')
+    parser.add_argument('--already-published', dest='force_replace', action='store_true')
+    parser.set_defaults(force_replace=False)
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
     out("UPDATING ZENODO ENTRY")
@@ -225,6 +227,12 @@ def update_zenodo_submission():
         out("***", r)
         c = cfg[r]
         if ZENODO_ID in c:
+            if args.force_replace:
+                out("... discard curnrent changes and unlock for edit")
+                discard_url = 'https://{}/api/deposit/depositions/{}/actions/discard?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
+                edit_url = 'https://{}/api/deposit/depositions/{}/actions/edit?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
+                print(requests.post(discard_url))
+                print(requests.post(edit_url))
             update_url = 'https://{}/api/deposit/depositions/{}?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
             description = ''.join([dc[n] for n in dc.keys() if n in c[URL]])
             if len(description) == 0:

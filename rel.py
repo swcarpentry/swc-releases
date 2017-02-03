@@ -456,6 +456,14 @@ def publish_zenodo_submission():
         pub_url = 'https://{}/api/deposit/depositions/{}/actions/publish?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
         req = requests.post(pub_url)
 
+def git_for_all():
+    cfg = read_ini_file(sys.argv[1])
+    for r in cfg.sections():
+        c = cfg[r]
+        out("***", r, "@", c[FOLDER])
+        gitfor(c, *sys.argv[2:])
+
+
 ####################################################
 
 def TODO():
@@ -468,7 +476,6 @@ def addcmdmap(k, v, pos=None):
     commands_map[k] = v
 addcmdmap('ini', create_ini_file)
 #addcmdmap('ini:dc', TODO, '999') # TODO generalization
-addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('clone-missing', clone_missing_repository)
 addcmdmap('fill-missing-sha', fill_missing_basesha_with_latest)
 addcmdmap('create-missing-zenodo', create_missing_zenodo_submission)
@@ -479,6 +486,9 @@ addcmdmap('make-zenodo-zip', make_zenodo_zip)
 addcmdmap('upload-zenodo-zip', upload_zenodo_zip)
 #
 addcmdmap('final-publish-zenodo', publish_zenodo_submission, '999')
+#
+addcmdmap('set-release-version', set_release_version, '999')
+addcmdmap('git-for-all', git_for_all, '999')
 
 
 def usage(info):

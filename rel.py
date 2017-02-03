@@ -174,7 +174,7 @@ def fill_missing_basesha_with_latest():
         out("***", r)
         c = cfg[r]
         if BASE_SHA not in c or FORCE_RESHA in c:
-            sha = gitfor(c, "rev-parse", "gh-pages", getoutput=True)
+            sha = gitfor(c, "rev-parse", "origin/gh-pages", getoutput=True)
             c[BASE_SHA] = sha.decode('utf-8').replace('\n', '')
             out("set sha", c[BASE_SHA])
         # save each time

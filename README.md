@@ -20,7 +20,7 @@ Pre setup:
 - use `python3 rel.py 1 --version 2017.02` to generate a template ini file from the latest version
 - cp `auto.ini 2017.02.ini` (you might edit this file or the generator code if you need fine tuning)
 
-Fully semi-automated with the following steps:
+Fully semi-automated with the following steps (create the branches, build and zenodo):
 
 - use `python3 rel.py A B ...`, where `B` is your .ini file, and `A` will take the values
     - `2` will clone the repositories, you can pass a git depth with `--depth` to make the clone faster/smaller
@@ -31,13 +31,17 @@ Fully semi-automated with the following steps:
     - `7` will create the branches, build the lessons, and push
     - `8` will zip the lessons into the `zips/` folder (by default)
     - `9` will upload the zips to Zenodo, you can later re-upload by removing the `zenodo_file` in the ini file, and pass `--force-replace`
-    - `final-publish-zenodo` to publish Zenodo submissions, meaning they won't be deletable afterwards
+    - ~~`final-publish-zenodo` to publish Zenodo submissions, meaning they **won't be deletable afterwards**~~ it is recommended to do it manually on the Zenodo website, to be sure there is not mistake before publishing
+
+Then, we need to setup the actual hosting on <http://swcarpentry.github.io/swc-releases/20??.??/>.
+For now, it uses the old tool:
+- one need to update the `Makefile` and run it
 
 ### NB: compared to before
 
 - we are acting the fact that the complete process is done by the releaser (no distinction between the role of lesson maintainers and release creator)
 - we use a descriptor file (that also get enriched), from which we generate the everything (Zenodo, branches, ...)
-- switched to an all-python codebase (no more bash, even though it was convenient)
+- rewrote and wrote a big part of the process in python (branches, zenodo, etc)
 
 # Release Model: how the 2016.06 release was done
 

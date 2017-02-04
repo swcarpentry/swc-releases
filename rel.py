@@ -481,6 +481,10 @@ def datemonth_as_text(vers):
     y, m = vers.split('.')
     return datetime.date(int(y), int(m), 1).strftime("%B %Y")
 
+def bibmonth_as_text(vers):
+    y, m = vers.split('.')
+    return datetime.date(int(y), int(m), 1).strftime("%b").lower()
+
 def publication_record():
     parser = new_parser_with_ini_file('Generate a publication record file.')
     parser.add_argument('--output', '-o', help="file name to generate", default=",,pub.html")
@@ -506,6 +510,34 @@ def publication_record():
             o.write('    <a href="{}">{}</a>\n'.format(zen, c[DOI]))
             o.write('</li>\n')
         o.write('</ul>\n')
+
+def publication_record_bibtex():
+    parser = new_parser_with_ini_file('Generate a publication record file.')
+    parser.add_argument('--output', '-o', help="file name to generate", default=",,pub.bib")
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    with open(args.output, 'w') as o:
+        for r in cfg.sections():
+            c = cfg[r]
+            bib_id = '{}_{}_{}'.format(
+                c[MAINTAINERS].split(',')[0].split(' ')[0].lower(),
+                c[VERSION].split('.')[0],
+                c[ZENODO_ID])
+            tex_authors = ' and '.join(c[MAINTAINERS].split(';'))
+            eds = c[MAINTAINERS]
+            url = 'https://github.com/swcarpentry/git-novice/tree/'+c[VERSION]
+            doi_url = 'https://doi.org/'+c[DOI]
+            out("***", r, "@", c[FOLDER])
+            o.write('@misc{{{},\n'.format(bib_id))
+            o.write('  author = {{{}}},\n'.format(tex_authors))
+            o.write('  note = {{({})}},\n'.format('eds.' if ';' in eds else 'ed.'))
+            o.write('  title = {{{}}},\n'.format(c[FULLTITLE]))
+            o.write('  month = {},\n'.format(bibmonth_as_text(c[VERSION])))
+            o.write('  year = {},\n'.format(c[VERSION].split('.')[0]))
+            o.write('  doi = {{{}}},\n'.format(c[DOI]))
+            o.write('  url = {{{}}}\n'.format(doi_url))
+            o.write('}\n')
+        o.write('\n')
 
 
 ####################################################
@@ -535,6 +567,7 @@ addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('git-for-all', git_for_all, '999')
 addcmdmap('----authors--rather--use--authorssh', manage_authors, '999')
 addcmdmap('print-publication-record', publication_record, '999')
+addcmdmap('print-bibtex', publication_record_bibtex, '999')
 
 
 def usage(info):

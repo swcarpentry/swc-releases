@@ -10,7 +10,7 @@ import json
 import requests
 import yaml
 import re
-
+import datetime
 
 # Main keys used in the ini file
 VERSION = 'version'
@@ -470,12 +470,42 @@ def concat_into(into, *args):
                 outfile.write(infile.read())
 
 def manage_authors():
-    parser = new_parser_with_ini_file('Help with managing AUTHORS files.')
+    parser = new_parser_with_ini_file('Help with managing AUTHORS files (DEPRECATED).')
     parser.add_argument('act', help="gather | explore")
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
     if args.act == 'gather':
         concat_into(',,all-mailmap', *[cfg[r][FOLDER]+'/.mailmap' for r in cfg.sections()])
+
+def datemonth_as_text(vers):
+    y, m = vers.split('.')
+    return datetime.date(int(y), int(m), 1).strftime("%B %Y")
+
+def publication_record():
+    parser = new_parser_with_ini_file('Generate a publication record file.')
+    parser.add_argument('--output', '-o', help="file name to generate", default=",,pub.html")
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    with open(args.output, 'w') as o:
+        o.write('<ul>\n')
+        for r in cfg.sections():
+            c = cfg[r]
+            eds = c[MAINTAINERS]
+            url = 'https://github.com/swcarpentry/git-novice/tree/'+c[VERSION]
+            zen = 'https://zenodo.org/record/'+c[ZENODO_ID]
+            out("***", r, "@", c[FOLDER])
+            o.write('<li>\n')
+            o.write('    {} ({}): "{}" Version {}, {},\n'.format(
+                ' and '.join(eds.split(';')),
+                'eds' if ';' in eds else 'ed',
+                c[FULLTITLE],
+                c[VERSION],
+                datemonth_as_text(c[VERSION])
+            ))
+            o.write('    <a href="{0}/">{0}</a>\n'.format(url))
+            o.write('    <a href="{}">{}</a>\n'.format(zen, c[DOI]))
+            o.write('</li>\n')
+        o.write('</ul>\n')
 
 
 ####################################################
@@ -503,7 +533,8 @@ addcmdmap('final-publish-zenodo', publish_zenodo_submission, '999')
 #
 addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('git-for-all', git_for_all, '999')
-addcmdmap('authors--rather--use--authorssh', manage_authors, '999')
+addcmdmap('----authors--rather--use--authorssh', manage_authors, '999')
+addcmdmap('print-publication-record', publication_record, '999')
 
 
 def usage(info):

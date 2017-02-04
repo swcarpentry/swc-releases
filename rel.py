@@ -463,6 +463,20 @@ def git_for_all():
         out("***", r, "@", c[FOLDER])
         gitfor(c, *sys.argv[2:])
 
+def concat_into(into, *args):
+    with open(into, 'w') as outfile:
+        for fname in args:
+            with open(fname) as infile:
+                outfile.write(infile.read())
+
+def manage_authors():
+    parser = new_parser_with_ini_file('Help with managing AUTHORS files.')
+    parser.add_argument('act', help="gather | explore")
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    if args.act == 'gather':
+        concat_into(',,all-mailmap', *[cfg[r][FOLDER]+'/.mailmap' for r in cfg.sections()])
+
 
 ####################################################
 
@@ -489,6 +503,7 @@ addcmdmap('final-publish-zenodo', publish_zenodo_submission, '999')
 #
 addcmdmap('set-release-version', set_release_version, '999')
 addcmdmap('git-for-all', git_for_all, '999')
+addcmdmap('authors--rather--use--authorssh', manage_authors, '999')
 
 
 def usage(info):

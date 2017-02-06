@@ -293,18 +293,25 @@ def guess_informations_from_repository():
             print(MAINTAINERS+':', c[MAINTAINERS])
         # authors from the AUTHORS file
         # cat ,,*/AUTHORS |sort |uniq|grep -v '^[^ ]* [^ ]*$'
-        authors = []
         if AUTHORS not in c:
-            with open (c[FOLDER]+"/AUTHORS", "r") as readme:
-                for l in readme.readlines():
-                    l = l.replace('\n', '')
-                    if len(l.strip()) == 0: continue
-                    first_name, last_name = guess_person_name(l)
-                    authors.append(last_name + ', ' + first_name)
+            authors = get_sorted_authors(c[FOLDER])
             c[AUTHORS] = ';'.join(authors)
             print(AUTHORS+':', c[AUTHORS])
         # save each time
         save_ini_file(cfg, args.ini_file)
+
+def get_sorted_authors(folder):
+    authors = []
+    with open (folder+"/AUTHORS", "r") as readme:
+        for l in readme.readlines():
+            l = l.replace('\n', '')
+            if len(l.strip()) == 0: continue
+            first_name, last_name = guess_person_name(l)
+            authors.append(last_name + ', ' + first_name)
+    authors = [a.upper()+' @@@ '+a for a in authors]
+    authors = sorted(list(set(authors)))
+    authors = [re.sub(r'.* @@@ ', '', a) for a in authors]
+    return authors
 
 def branch_build_and_patch_lesson():
     parser = new_parser_with_ini_file('Branch the lesson, build it, patch it, etc.')
@@ -477,6 +484,20 @@ def manage_authors():
     if args.act == 'gather':
         concat_into(',,all-mailmap', *[cfg[r][FOLDER]+'/.mailmap' for r in cfg.sections()])
 
+def sort_authors():
+    parser = new_parser_with_ini_file('Sort AUTHORS files (by last name).')
+    args = parser.parse_args(sys.argv[1:])
+    cfg = read_ini_file(args.ini_file)
+    for r in cfg.sections():
+        c = cfg[r]
+        out("***", r, "@", c[FOLDER])
+        authors = get_sorted_authors(c[FOLDER])
+        authors = '\n'.join([' '.join(a.split(', ')[::-1]) for a in authors])
+        with open(c[FOLDER]+'/AUTHORS', 'w') as authors_file:
+            authors_file.write(authors)
+            authors_file.write('\n')
+        exit
+
 def datemonth_as_text(vers):
     y, m = vers.split('.')
     return datetime.date(int(y), int(m), 1).strftime("%B %Y")
@@ -539,7 +560,6 @@ def publication_record_bibtex():
             o.write('}\n')
         o.write('\n')
 
-
 ####################################################
 
 def TODO():
@@ -568,6 +588,7 @@ addcmdmap('git-for-all', git_for_all, '999')
 addcmdmap('----authors--rather--use--authorssh', manage_authors, '999')
 addcmdmap('print-publication-record', publication_record, '999')
 addcmdmap('print-bibtex', publication_record_bibtex, '999')
+addcmdmap('sort-authors', sort_authors, '999')
 
 
 def usage(info):

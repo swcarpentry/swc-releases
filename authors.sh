@@ -129,6 +129,10 @@ check-author-diff-summary() {
     done
 }
 
+sort-AUTHORS() {
+  echo "Actually, use the python version"
+}
+
 
 #list-repos
 #process-repo ,,workshop-template
@@ -161,4 +165,3 @@ fi
 #for i in $(list-repos) ; do
 #    process-repo $i
 #done
-

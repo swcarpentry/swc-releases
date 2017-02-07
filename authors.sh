@@ -63,6 +63,12 @@ check-pull-requests() {
     done | xargs firefox
 }
 
+check-networks() {
+    for r in $(list-repos); do
+        echo https://github.com/swcarpentry/${r#,,}/network
+    done | xargs firefox
+}
+
 check-all-mailmap() {
     echo "## Looking for duplicates..."
     cat all-mailmap | sed 's@.*<@<@g'| sort | uniq -c | grep -v '^ *1'   ||true

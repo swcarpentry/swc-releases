@@ -148,6 +148,11 @@ sort-AUTHORS() {
 inifile=$1
 shift
 
+if test "$inifile" == "--help" ; then
+    cat $0 | grep '^[^ ]*() *{ *$' | sed 's@(.*@@g'
+    exit
+fi
+
 if test "$inifile" == "obfuscate" ; then
     obfuscate
     exit

@@ -6,7 +6,7 @@ CORE_LESSONS_B=git-novice hg-novice make-novice matlab-novice-inflammation pytho
 
 # r-novice-gapminder matlab-novice-inflammation make-novice instructor-training
 
-.PHONY: 2015.08 2016.06-alpha 2016.06
+.PHONY: 2015.08 2016.06-alpha 2016.06 2017.02
 
 nothing:
 	@echo "An target should be explicitly specified."
@@ -20,10 +20,14 @@ nothing:
 2016.06:
 	./make-or-update-release.sh $@ ${CORE_LESSONS_B}
 
+2017.02:
+	./make-or-update-release.sh $@ ${CORE_LESSONS_B}
+
 update-submodules:
 	#git submodule update --remote -- 2015.08/*/
 	#git submodule update --remote -- 2016.06-alpha/*/
-	git submodule update --remote -- 2016.06/*/
+	#git submodule update --remote -- 2016.06/*/
+	git submodule update --remote -- 2017.02/*/
 
 check-submodules:
 	./check-submodules.sh

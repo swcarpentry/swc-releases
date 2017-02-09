@@ -26,9 +26,9 @@ Fully semi-automated with the following steps (create the branches, build and ze
     - `2` will clone the repositories, you can pass a git depth with `--depth` to make the clone faster/smaller
     - `3` will get the sha1 corresponding to the tip of `gh-pages`, you can then edit the .ini file if you want to release older versions for certain repositories
     - `4` will create the (empty) Zenodo submissions, adding some identifiers in the .ini file
-    - `5` will gather info from the repositories, filling the the .ini with it
-    - `6` will fill-in or update the Zenodo submissions
-    - `7` will create the branches, build the lessons, and push
+    - `5` will create the branches, build the lessons, and push
+    - `6` will gather info from the repositories, filling the the .ini with it
+    - `7` will fill-in or update the Zenodo submissions
     - `8` will zip the lessons into the `zips/` folder (by default)
     - `9` will upload the zips to Zenodo, you can later re-upload by removing the `zenodo_file` in the ini file, and pass `--force-replace`
     - ~~`final-publish-zenodo` to publish Zenodo submissions, meaning they **won't be deletable afterwards**~~ it is recommended to do it manually on the Zenodo website, to be sure there is not mistake before publishing

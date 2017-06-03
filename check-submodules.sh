@@ -5,11 +5,10 @@ check-individual-submodule() {
     echo "CHECKING: $1"
     local tsturl="$2/tree/$3"
     echo " - testing url: $tsturl"
-    local res=$(curl -s "$tsturl")
-    if test "$res" = '{"error":"Not Found"}' ; then
-        echo ' - !!!!!!!!!!! THERE IS A PROBLEM with '"$tsturl"
-    else
+    if grep -q "Fork" <(curl -s "$tsturl") ; then
         echo ' - ok'
+    else
+        echo ' - !!!!!!!!!!! THERE IS A PROBLEM with '"$tsturl"
     fi
 }
 

@@ -535,6 +535,7 @@ def publication_record():
 def publication_record_bibtex():
     parser = new_parser_with_ini_file('Generate a publication record file.')
     parser.add_argument('--output', '-o', help="file name to generate", default=",,pub.bib")
+    parser.add_argument('--type', '-t', help="bibtex entry type", default="misc")
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
     with open(args.output, 'w') as o:
@@ -545,10 +546,23 @@ def publication_record_bibtex():
                 c[VERSION].split('.')[0],
                 c[ZENODO_ID])
             tex_authors = ' and '.join(c[MAINTAINERS].split(';'))
+            tex_bookauthors = ' and '.join(c[AUTHORS].split(';'))
             eds = c[MAINTAINERS]
+            tex_bookeds = ' and '.join(c[MAINTAINERS].split(';'))
             url = 'https://github.com/swcarpentry/git-novice/tree/'+c[VERSION]
             doi_url = 'https://doi.org/'+c[DOI]
             out("***", r, "@", c[FOLDER])
+            if args.type == 'book': # generate @book
+                o.write('@book{{{},\n'.format(bib_id))
+                o.write('  author = {{{}}},\n'.format(tex_bookauthors))
+                o.write('  editor = {{({})}},\n'.format(tex_bookeds))
+                o.write('  title = {{{}}},\n'.format(c[FULLTITLE]))
+                o.write('  month = {},\n'.format(bibmonth_as_text(c[VERSION])))
+                o.write('  year = {},\n'.format(c[VERSION].split('.')[0]))
+                o.write('  doi = {{{}}},\n'.format(c[DOI]))
+                o.write('  url = {{{}}}\n'.format(doi_url))
+                o.write('}\n')
+                continue
             o.write('@misc{{{},\n'.format(bib_id))
             o.write('  author = {{{}}},\n'.format(tex_authors))
             o.write('  note = {{({})}},\n'.format('eds.' if ';' in eds else 'ed.'))
@@ -559,6 +573,7 @@ def publication_record_bibtex():
             o.write('  url = {{{}}}\n'.format(doi_url))
             o.write('}\n')
         o.write('\n')
+    print("Generated bibtex into '"+str(args.output)+"'")
 
 ####################################################
 

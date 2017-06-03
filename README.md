@@ -60,15 +60,14 @@ For now, it uses the old tool:
     ./authors.sh tmp.ini check-author-diff-summary
     
     tail -13 auto.ini |head -7 > tmp.ini
-    git checkout 2017.02~~
-    RE=YES ./authors.sh auto.ini process-repo
+    # or a pair of lesson or anything, or start from some reduced 2017.02
+    
+    python3 rel.py git-for-all tmp.ini stash
+    python3 rel.py git-for-all tmp.ini checkout 2017.02~~
+    RE=YES ./authors.sh tmp.ini process-repo
     python3 rel.py 3 tmp.ini
     python3 rel.py 6 tmp.ini
-    e tmp.ini   # to move maintainers as authors (putting maitainers first and removing duplicates)
     python3 rel.py print-bibtex tmp.ini
-    e ,,*.bib   # to get/copy the bibtex authors
-    python3 rel.py print-bibtex 2017.02.ini
-    e ,,*.bib   # to merge/paste the bibtex authors with the 2017.02 version
     
 <!-- OLD NOTES -->
 

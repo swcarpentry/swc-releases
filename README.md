@@ -31,10 +31,11 @@ Fully semi-automated with the following steps (create the branches, build and ze
     - `7` will fill-in or update the Zenodo submissions
     - `8` will zip the lessons into the `zips/` folder (by default)
     - `9` will upload the zips to Zenodo, you can later re-upload by removing the `zenodo_file` in the ini file, and pass `--force-replace`
-    - ~~`final-publish-zenodo` to publish Zenodo submissions, meaning they **won't be deletable afterwards**~~ it is recommended to do it manually on the Zenodo website, to be sure there is not mistake before publishing
+    - ~~`final-publish-zenodo` to publish Zenodo submissions, meaning they **won't be deletable afterwards**~~ it is recommended to do it manually on the Zenodo website, to be sure there are no mistakes before publishing
 
 Then, we need to setup the actual hosting on <http://swcarpentry.github.io/swc-releases/20??.??/>.
 For now, it uses the old tool:
+
 - one need to update the `Makefile` and run it
 
 ### NB: compared to before
@@ -42,6 +43,34 @@ For now, it uses the old tool:
 - we are acting the fact that the complete process is done by the releaser (no distinction between the role of lesson maintainers and release creator)
 - we use a descriptor file (that also get enriched), from which we generate the everything (Zenodo, branches, ...)
 - rewrote and wrote a big part of the process in python (branches, zenodo, etc)
+
+
+
+
+# RANDOM NOTES 2017-06-03 (somewhat jibberish)
+
+    python3 rel.py 1 --version 9999-none
+    python3 rel.py git-for-all auto.ini branch
+    python3 rel.py git-for-all auto.ini checkout gh-pages
+    python3 rel.py git-for-all auto.ini branch
+    python3 rel.py git-for-all auto.ini pull
+
+    head -6 auto.ini > tmp.ini    
+
+    ./authors.sh tmp.ini check-author-diff-summary
+    
+    tail -13 auto.ini |head -7 > tmp.ini
+    git checkout 2017.02~~
+    RE=YES ./authors.sh auto.ini process-repo
+    python3 rel.py 3 tmp.ini
+    python3 rel.py 6 tmp.ini
+    e tmp.ini   # to move maintainers as authors (putting maitainers first and removing duplicates)
+    python3 rel.py print-bibtex tmp.ini
+    e ,,*.bib   # to get/copy the bibtex authors
+    python3 rel.py print-bibtex 2017.02.ini
+    e ,,*.bib   # to merge/paste the bibtex authors with the 2017.02 version
+    
+<!-- OLD NOTES -->
 
 # Release Model: how the 2016.06 release was done
 

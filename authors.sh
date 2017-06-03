@@ -82,6 +82,37 @@ obfuscate() {
     cat ,,amm | tr '[a-m][n-z][A-M][N-Z]' '[n-z][a-m][N-Z][A-M]' > all-mailmap
 }
 
+_STYLES=$(pwd)/,,styles-prevent
+_STYLES_OK="$_STYLES.ok"
+rm -f "$_STYLES_OK"
+__check-we-have-localstyles-uptodate-for-authors-filtering() {
+    echo ____
+    if [ -f "$_STYLES_OK" ] ; then
+        return
+    fi
+    if [ -d "$_STYLES" ] ; then
+        git -C "$_STYLES" pull
+    else
+        git clone https://github.com/swcarpentry/styles.git "$_STYLES"
+    fi
+    touch "$_STYLES_OK"
+}
+_check-we-have-localstyles-uptodate-for-authors-filtering() {
+    __check-we-have-localstyles-uptodate-for-authors-filtering "$@" 1>&2
+}
+_git-all-authors() {
+    _check-we-have-localstyles-uptodate-for-authors-filtering
+    # get a list of effective contributors (remove style contributions)
+    if [ "$NOFILTER" != "" ] ; then
+        git log --format="%aN" |sort |uniq
+    else
+        awk 'NR==FNR{a[$1];next} !($1 in a) {$1=""; print $0}' \
+            <(git -C "$_STYLES" log --format="%H") \
+            <(git log --format="%H %aN") \
+            |cut -c 2- |sort |uniq
+    fi
+}
+
 process-repo() {
     local i
     for i in $(list-repos); do
@@ -103,14 +134,15 @@ process-repo() {
             fi
         done
         cat ../,,.mailmap | sort | uniq > .mailmap
+        
         # Now we have the proper mailmap, go on with AUTHORS
         # show it first
-        diff <(cat AUTHORS |sort|uniq) <(git log --format="%aN" |sort|uniq) |colordiff
+        diff <(cat AUTHORS |sort|uniq) <(_git-all-authors) |colordiff
         # add what is missing (remove nothing)
-        awk 'NR==FNR{a[$0];next}!($0 in a)' AUTHORS <(git log --format="%aN"|sort |uniq) > ../,,diffs
+        awk 'NR==FNR{a[$0];next}!($0 in a)' AUTHORS <(_git-all-authors) > ../,,diffs
         cat ../,,diffs | sort | uniq >> AUTHORS
         # remove what should be
-        awk 'NR==FNR{a[$0];next}!($0 in a)' <(git log --format="%aN" |sort|uniq) <(cat AUTHORS |sort|uniq) > ../,,diffs
+        awk 'NR==FNR{a[$0];next}!($0 in a)' <(_git-all-authors) <(cat AUTHORS |sort|uniq) > ../,,diffs
         cat ../,,diffs | while read line ; do
             echo RM:$line
             cp AUTHORS ../,,auth
@@ -140,6 +172,10 @@ sort-AUTHORS() {
 }
 
 
+
+
+
+
 #list-repos
 #process-repo ,,workshop-template
 #check-author-diff-summary | colordiff
@@ -163,11 +199,15 @@ echo "Found ini file $inifile"
 
 if grep __OBFUSCATED__ all-mailmap ; then
     echo "NB: Automatically un-obfuscated all-mailmap"
-    echo "    ... should obfuscate before commit, with: $0 obfscate"
+    echo "    ... should obfuscate before commit, with: $0 obfuscate"
     obfuscate
 fi
 
 "$@"
+
+if [ "$RE" != "" ] ; then
+    obfuscate
+fi
 
 #for i in $(list-repos) ; do
 #    process-repo $i

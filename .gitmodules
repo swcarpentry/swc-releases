@@ -118,3 +118,45 @@
 	path = 2017.02/workshop-template
 	url = https://github.com/swcarpentry/workshop-template
 	branch = 2017.02
+[submodule "2017.08/git-novice"]
+	path = 2017.08/git-novice
+	url = https://github.com/swcarpentry/git-novice
+	branch = 2017.08
+[submodule "2017.08/hg-novice"]
+	path = 2017.08/hg-novice
+	url = https://github.com/swcarpentry/hg-novice
+	branch = 2017.08
+[submodule "2017.08/make-novice"]
+	path = 2017.08/make-novice
+	url = https://github.com/swcarpentry/make-novice
+	branch = 2017.08
+[submodule "2017.08/matlab-novice-inflammation"]
+	path = 2017.08/matlab-novice-inflammation
+	url = https://github.com/swcarpentry/matlab-novice-inflammation
+	branch = 2017.08
+[submodule "2017.08/python-novice-inflammation"]
+	path = 2017.08/python-novice-inflammation
+	url = https://github.com/swcarpentry/python-novice-inflammation
+	branch = 2017.08
+[submodule "2017.08/r-novice-gapminder"]
+	path = 2017.08/r-novice-gapminder
+	url = https://github.com/swcarpentry/r-novice-gapminder
+	branch = 2017.08
+[submodule "2017.08/r-novice-inflammation"]
+	path = 2017.08/r-novice-inflammation
+	url = https://github.com/swcarpentry/r-novice-inflammation
+	branch = 2017.08
+[submodule "2017.08/shell-novice"]
+	path = 2017.08/shell-novice
+	url = https://github.com/swcarpentry/shell-novice
+	branch = 2017.08
+[submodule "2017.08/sql-novice-survey"]
+	path = 2017.08/sql-novice-survey
+	url = https://github.com/swcarpentry/sql-novice-survey
+	branch = 2017.08
+[submodule "2017.08/lesson-example"]
+	path = 2017.08/lesson-example
+	url = https://github.com/swcarpentry/lesson-example
+[submodule "2017.08/workshop-template"]
+	path = 2017.08/workshop-template
+	url = https://github.com/swcarpentry/workshop-template

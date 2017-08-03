@@ -120,6 +120,22 @@ NOW, let's go for the release, we already have the ini file (we'll add it to hav
     C
     B 7
     B 8
+    B 9
+    A obfuscate
+    C
+
+Now, we need to check on zenodo, but we can still also host the release (it is a good preview at worse).
+
+    ##DO: modify the makefile, taking inspiration from   git  log -p 775456~..775456 -- Makefile
+    #^ this time, a new lesson set had to be created (as we don't release the instructor-training)
+    git add Makefile
+    make 2017.08
+    #^ got a failure du to wrong handling of tags (fixed), but need to redo
+    rm -rf 2017.08/
+    make clean-failure
+    make 2017.08
+    
+    git commit -m 'Release 2017.08'
 
 # RANDOM NOTES 2017-06-03 (somewhat jibberish)
 

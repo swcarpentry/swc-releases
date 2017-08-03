@@ -317,6 +317,7 @@ def branch_build_and_patch_lesson():
     parser = new_parser_with_ini_file('Branch the lesson, build it, patch it, etc.')
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
+    releasemode = read_ini_file(GLOBAL_INI)['relmode']
     out("BUILDING LESSON")
     more = []
     for r in cfg.sections():
@@ -327,6 +328,9 @@ def branch_build_and_patch_lesson():
         jekyllversion = cmd('jekyll', '--version', getoutput=True)
         jekyllversion = jekyllversion.decode('utf-8').replace('\n', '')
         cssfile = 'assets/css/lesson.css'
+        rmode = ''.join([releasemode[n] for n in releasemode.keys() if n in c[URL]])
+        if rmode == '':
+            rmode = 'BRANCH'
         # make branch
         out("testing for the presence of ", vers)
         if gitfor(c, 'rev-parse', vers, '--', noerror=True) == 0:
@@ -335,11 +339,15 @@ def branch_build_and_patch_lesson():
                 continue
             out("recreating branch")
             print(c[BASE_SHA])
-            gitfor(c, 'checkout', '-B', c[VERSION], c[BASE_SHA])
-            more += ['--force']
+            if rmode == 'BRANCH':
+                gitfor(c, 'checkout', '-B', c[VERSION], c[BASE_SHA])
+                more += ['--force']
         else:
-            out("creating branch")
-            gitfor(c, 'checkout', '-b', c[VERSION], c[BASE_SHA])
+            if rmode == 'BRANCH':
+                out("creating branch")
+                gitfor(c, 'checkout', '-b', c[VERSION], c[BASE_SHA])
+            if rmode == 'TAG':
+                gitfor(c, 'checkout', c[BASE_SHA])
         # build etc
         out("building jekyll lesson")
         with open(c[FOLDER]+"/_config.yml", "a") as jekyll_config:
@@ -362,7 +370,11 @@ def branch_build_and_patch_lesson():
         gitfor(c, 'add', cssfile)
         gitfor(c, 'commit', '-m', messageprefix+'Added version ('+vers+') to all pages via CSS')
         out("pushing?")
-        gitfor(c, 'push', *more, '--set-upstream', 'origin', vers)
+        if rmode == 'BRANCH':
+            gitfor(c, 'push', *more, '--set-upstream', 'origin', vers)
+        if rmode == 'TAG':
+            gitfor(c, 'tag', vers)
+            gitfor(c, 'push', '--follow-tags', *more, 'origin', 'tag', vers)
 
 def make_zenodo_zip():
     parser = new_parser_with_ini_file('Make the zip for Zenodo')

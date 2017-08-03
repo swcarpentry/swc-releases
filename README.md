@@ -23,7 +23,7 @@ Pre setup:
 Fully semi-automated with the following steps (create the branches, build and zenodo):
 
 - use `python3 rel.py A B ...`, where `B` is your .ini file, and `A` will take the values
-    - `2` will clone the repositories, you can pass a git depth with `--depth` to make the clone faster/smaller
+    - `2` will clone the repositories, you can pass a git depth with `--depth` to make the clone faster/smaller (NB: don't limit depth if you intend to use the repository to create the AUTHORS etc)
     - `3` will get the sha1 corresponding to the tip of `gh-pages`, you can then edit the .ini file if you want to release older versions for certain repositories
     - `4` will create the (empty) Zenodo submissions, adding some identifiers in the .ini file
     - `5` will create the branches, build the lessons, and push
@@ -46,22 +46,24 @@ For now, it uses the old tool:
 
 
 
-# RANDOM NOTES 2017-08 (while updating and releasing)
+# RANDOM NOTES 2017-08-03 (while updating and releasing)
 
 Preparing and getting latest versions (anyway there will be some implementation work, this time, to get the author list up to date (with opt-out))
 
-    python3 rel.py 1 --version 2017-08
-    mv auto.ini 2017-08.ini
+    alias A='./authors.sh 2017.08.ini'
+    function B() { local p1="$1" ; shift ; python3 rel.py "$p1" 2017.08.ini "$@" ; }
+
+    python3 rel.py 1 --version 2017.08
+    mv auto.ini 2017.08.ini
     ##DO: manually remove instructor training as we are not releasing it
-    python3 rel.py git-for-all 2017-08.ini branch
-    python3 rel.py git-for-all 2017-08.ini checkout gh-pages
-    python3 rel.py git-for-all 2017-08.ini branch
-    python3 rel.py git-for-all 2017-08.ini pull
+    B git-for-all branch
+    B git-for-all checkout gh-pages
+    B git-for-all branch
+    B git-for-all pull
 
 Now, let's tune the authors (this time, it involves some implementation, so it will probably change for the next release)
 
     ./authors.sh --help
-    alias A='./authors.sh 2017-08.ini'
 
     A check-pull-requests
     #^ not so clean, too many to actually check now
@@ -76,13 +78,38 @@ Now, let's tune the authors (this time, it involves some implementation, so it w
     ##^ use 'zz-...' when not really found
     A check-all-mailmap
     ##DO: continue fixing, checking also all "Missing" to find typos (but many have actually not commited anything or on instructor-training which is not in this release?)
+    A obfuscate
+    ##DO: do commit new authors
 
 Now that we have a decent global mailmap, let's patch all repositories (with their own .mailmap and AUTHORS). This is the occasion to list as AUTHORS only the ones that: contributed (outside `style` and did not opt out for these commits, this is automated).
 
-    python3 rel.py git-for-all 2017-08.ini checkout -- .mailmap AUTHORS
+    B git-for-all checkout -- .mailmap AUTHORS
     A process-repo
-    python3 rel.py sort-authors 2017-08.ini
-    python3 rel.py git-for-all 2017-08.ini diff
+    B sort-authors
+    B git-for-all diff
+
+Now we will really push the author changes, be sure of what we have...
+
+    B git-for-all diff
+    B git-for-all add .mailmap AUTHORS
+    B git-for-all commit -m 'Updating mailmap and AUTHORS before release'
+    B git-for-all push
+
+NOW, let's go for the release, we already have the ini file (we'll add it to have temporary backups and diffs). NB: need to (re)do the R installation (see section below).
+
+    alias C='git diff 2017.08.ini ; git add 2017.08.ini'
+    C
+    B
+    B 3
+    C
+    # for the next step, one need a/the zenodo token
+    B 4
+    C
+    B 5
+    #^ R failed (forgot to install stuff), so we need to redo (this skips already pushed ones so it is ok)
+    B 5
+    #^ the new TAG feature failed so we fix and rerun
+    B 5
 
 
 # RANDOM NOTES 2017-06-03 (somewhat jibberish)

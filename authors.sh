@@ -248,10 +248,3 @@ if [ "$RE" != "" ] ; then
     obfuscate
 fi
 
-#for i in $(list-repos) ; do
-#    process-repo $i
-#done
-
-#for i in $(list-repos) ; do
-#    process-repo $i
-#done

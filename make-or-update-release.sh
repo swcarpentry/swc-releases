@@ -14,14 +14,18 @@ resolve-lesson() {
     fi
 }
 is-tag() {
-    test "$2" = v5.3
-    return 
+    if test "$2" = v5.3 ; then
+        true
+        return
+    fi
     # might need auth... to avoid rate limits
     curl -s "${1/github.com/api.github.com\/repos}/git/refs/tags/$2" | grep -q '"ref"'
 }
 is-branch() {
-    test "$2" != v5.3
-    return
+    if test "$2" = v5.3 ; then
+        false
+        return
+    fi
     curl -s "${1/github.com/api.github.com\/repos}/git/refs/heads/$2" | grep -q '"ref"'
 }
 fail() {

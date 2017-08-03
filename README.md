@@ -46,6 +46,36 @@ For now, it uses the old tool:
 
 
 
+# RANDOM NOTES 2017-08 (while updating and releasing)
+
+Preparing and getting latest versions (anyway there will be some implementation work, this time, to get the author list up to date (with opt-out))
+
+    python3 rel.py 1 --version 2017-08
+    mv auto.ini 2017-08.ini
+    ##DO: manually remove instructor training as we are not releasing it
+    python3 rel.py git-for-all 2017-08.ini branch
+    python3 rel.py git-for-all 2017-08.ini checkout gh-pages
+    python3 rel.py git-for-all 2017-08.ini branch
+    python3 rel.py git-for-all 2017-08.ini pull
+
+Now, let's tune the authors (this time, it involves some implementation, so it will probably change for the next release)
+
+    ./authors.sh --help
+    alias A='./authors.sh 2017-08.ini'
+
+    A check-pull-requests
+    #^ not so clean, too many to actually check now
+
+    A check-all-mailmap
+    ##DO: manually removed one duplicate
+    ##DO: manually created and fixed all-moreinfo
+
+    A process-repo
+    emacs ,,.todo-mailmapclean all-mailmap
+    ##DO: add manually, sort-lines, and look for proper names for each TODO, ... very tedious
+    ##^ use 'zz-...' when not really found
+    A check-all-mailmap
+    ##DO: continue fixing, checking also all "Missing" to find typos (but many have actually not commited anything or on instructor-training which is not in this release?)
 
 # RANDOM NOTES 2017-06-03 (somewhat jibberish)
 

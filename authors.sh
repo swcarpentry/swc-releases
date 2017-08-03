@@ -70,16 +70,28 @@ check-networks() {
 }
 
 check-all-mailmap() {
-    echo "## Looking for duplicates..."
+    echo "#### Looking for duplicates..."
     cat all-mailmap | sed 's@.*<@<@g'| sort | uniq -c | grep -v '^ *1'   ||true
-    echo "## Looking for single-word name..."
+    echo "#### Looking for single-word name..."
     cat all-mailmap | grep '^[^ ]* <'    ||true
+    echo "#### Looking in all-mailmap for all names from all-moreinfo..."
+    cat all-moreinfo | grep -v '^#' | sed 's@,.*@@g' | while read n; do
+        if cat all-mailmap | grep -q "^$n " ; then
+            true
+        else
+            echo "Missing $n in all-mailmap (present in all-moreinfo)"
+        fi
+    done
 }
 
+__obfuscate() {
+    \cp "$1" ,,obf
+    cat ,,obf | tr '[a-m][n-z][A-M][N-Z]' '[n-z][a-m][N-Z][A-M]' > "$1"
+}
 obfuscate() {
     # used for commiting cheaply obfuscated emails
-    cp all-mailmap ,,amm
-    cat ,,amm | tr '[a-m][n-z][A-M][N-Z]' '[n-z][a-m][N-Z][A-M]' > all-mailmap
+    __obfuscate all-mailmap
+    __obfuscate all-moreinfo
 }
 
 _STYLES=$(pwd)/,,styles-prevent
@@ -113,6 +125,7 @@ _git-all-authors() {
     fi
 }
 
+rm -f ",,.todo-mailmap"
 process-repo() {
     local i
     for i in $(list-repos); do
@@ -129,12 +142,14 @@ process-repo() {
                 #echo "Recycling: $repl"
                 echo "$repl" >> ../,,.mailmap
             else
-                echo "From commit (TODO manual integration needed): $line"
+                echo "From commit (TODO manual integration, saved to ,,.todo-mailmap): $line"
                 echo "$line # TODO" >> ../,,.mailmap
+                echo "$line # TODO" >> ../,,.todo-mailmap
             fi
         done
-        cat ../,,.mailmap | sort | uniq > .mailmap
-        
+        cat ../,,.mailmap      | sort | uniq > .mailmap
+        cat ../,,.todo-mailmap | sort | uniq > ../,,.todo-mailmapclean
+
         # Now we have the proper mailmap, go on with AUTHORS
         # show it first
         diff <(cat AUTHORS |sort|uniq) <(_git-all-authors) |colordiff

@@ -2,6 +2,7 @@
 
 set -e
 
+GIT_LOG_PATHSPEC="--no-merges gh-pages -- . :(exclude)tools/ :(exclude)AUTHORS :(exclude).mailmap"
 
 list-repos() {
     cat $inifile | grep -e '^local_folder = ' | sed 's@[^=]*=@@g'
@@ -28,12 +29,12 @@ process-repo-old() {
     cd $i
     echo "////////// $i //////////"
     # compute missing names (using mailmap as it may already resolve some namings)
-    diff <(git log --use-mailmap --format="%aN" |sort |uniq) <(sort AUTHORS) | grep -e '^< ' | sed 's@^< @@g' > ../,,diffs
+    diff <(git log --use-mailmap --format="%aN" $GIT_LOG_PATHSPEC |sort |uniq) <(sort AUTHORS) | grep -e '^< ' | sed 's@^< @@g' > ../,,diffs
     git checkout .mailmap
     fix-multi-email-in-one-line .mailmap
     # fix missing names with the global version, or fill a default from the commit
     cat ../,,diffs | while read n ; do
-        e=$(git log --use-mailmap --format="%aN --- %aE" | sort | uniq | grep -e '^'"$n"' ---' | sed 's@.* --- @@g')
+        e=$(git log --use-mailmap --format="%aN --- %aE" $GIT_LOG_PATHSPEC | sort | uniq | grep -e '^'"$n"' ---' | sed 's@.* --- @@g')
         repl=$(cat ../,,all-mailmap | grep "$e" | tail -1)
         if test "$repl" '!=' "" ; then
             echo "Recycling: $repl"
@@ -45,10 +46,10 @@ process-repo-old() {
         fi
     done
     # enrich the AUTHORS file
-    diff <(cat AUTHORS |sort |uniq) <(git log --use-mailmap --format="%aN" |sort |uniq) | grep -e '^> ' | sed 's@^> @@g' > ../,,adds
+    diff <(cat AUTHORS |sort |uniq) <(git log --use-mailmap --format="%aN" $GIT_LOG_PATHSPEC |sort |uniq) | grep -e '^> ' | sed 's@^> @@g' > ../,,adds
     cat ../,,adds >> AUTHORS
     # check contents
-    diff <(cat AUTHORS |sort |uniq) <(git log --use-mailmap --format="%aN" |sort |uniq)    ||true
+    diff <(cat AUTHORS |sort |uniq) <(git log --use-mailmap --format="%aN" $GIT_LOG_PATHSPEC |sort |uniq)    ||true
     #git diff .mailmap   ||true
     #
     git checkout -B update-mailmap-and-authors
@@ -97,6 +98,9 @@ obfuscate() {
 _STYLES=$(pwd)/,,styles-prevent
 _STYLES_OK="$_STYLES.ok"
 rm -f "$_STYLES_OK"
+_EXAMPLE=$(pwd)/,,example-prevent
+_EXAMPLE_OK="$_EXAMPLE.ok"
+rm -f "$_EXAMPLE_OK"
 __check-we-have-localstyles-uptodate-for-authors-filtering() {
     echo ____
     if [ -f "$_STYLES_OK" ] ; then
@@ -108,6 +112,12 @@ __check-we-have-localstyles-uptodate-for-authors-filtering() {
         git clone https://github.com/swcarpentry/styles.git "$_STYLES"
     fi
     touch "$_STYLES_OK"
+    if [ -d "$_EXAMPLE" ] ; then
+        git -C "$_EXAMPLE" pull
+    else
+        git clone https://github.com/swcarpentry/lesson-example.git "$_EXAMPLE"
+    fi
+    touch "$_EXAMPLE_OK"
 }
 _check-we-have-localstyles-uptodate-for-authors-filtering() {
     __check-we-have-localstyles-uptodate-for-authors-filtering "$@" 1>&2
@@ -116,23 +126,31 @@ _git-all-authors() {
     _check-we-have-localstyles-uptodate-for-authors-filtering
     # get a list of effective contributors (remove style contributions)
     if [ "$NOFILTER" != "" ] ; then
-        git log --format="%aN" |sort |uniq
+        git log --format="%aN" $GIT_LOG_PATHSPEC |sort |uniq
     else
-        awk 'NR==FNR{a[$1];next} !($1 in a) {$1=""; print $0}' \
-            <(git -C "$_STYLES" log --format="%H") \
-            <(git log --format="%H %aN") \
-            |cut -c 2- |sort |uniq
+        if [ "$1" != "swcarpentry/lesson-example" ] ; then
+            awk 'NR==FNR{a[$1];next} !($1 in a) {$1=""; print $0}' \
+                <(git -C "$_STYLES" log --format="%H" ; git -C "$_EXAMPLE" log --format="%H") \
+                <(git log --format="%H %aN" $GIT_LOG_PATHSPEC) \
+                |cut -c 2- |sort |uniq
+        else
+            awk 'NR==FNR{a[$1];next} !($1 in a) {$1=""; print $0}' \
+                <(git -C "$_STYLES" log --format="%H") \
+                <(git log --format="%H %aN" $GIT_LOG_PATHSPEC) \
+                |cut -c 2- |sort |uniq
+        fi
     fi
 }
 
 rm -f ",,.todo-mailmap"
+touch ",,.todo-mailmap"
 process-repo() {
     local i
     for i in $(list-repos); do
         echo "////////// $i //////////"
         cd $i
         # the ones that actually need something in the mail map (they don't match what we have in the shared one)
-        awk 'NR==FNR{a[$0];next}!($0 in a)' ../all-mailmap <(git log --format="%an <%ae>"|sort |uniq) > ../,,diffs
+        awk 'NR==FNR{a[$0];next}!($0 in a)' ../all-mailmap <(git log --format="%an <%ae>" $GIT_LOG_PATHSPEC |sort |uniq) > ../,,diffs
 
         rm -f ../,,.mailmap
         cat ../,,diffs | while read line ; do
@@ -151,13 +169,14 @@ process-repo() {
         cat ../,,.todo-mailmap | sort | uniq > ../,,.todo-mailmapclean
 
         # Now we have the proper mailmap, go on with AUTHORS
+        local reponame=$(git remote get-url origin | sed -e 's_^git@github.com:__' -e 's@[.]git$@@')
         # show it first
-        diff <(cat AUTHORS |sort|uniq) <(_git-all-authors) |colordiff
+        diff <(cat AUTHORS |sort|uniq) <(_git-all-authors $reponame) |colordiff
         # add what is missing (remove nothing)
-        awk 'NR==FNR{a[$0];next}!($0 in a)' AUTHORS <(_git-all-authors) > ../,,diffs
+        awk 'NR==FNR{a[$0];next}!($0 in a)' AUTHORS <(_git-all-authors $reponame) > ../,,diffs
         cat ../,,diffs | sort | uniq >> AUTHORS
         # remove what should be
-        awk 'NR==FNR{a[$0];next}!($0 in a)' <(_git-all-authors) <(cat AUTHORS |sort|uniq) > ../,,diffs
+        awk 'NR==FNR{a[$0];next}!($0 in a)' <(_git-all-authors $reponame) <(cat AUTHORS |sort|uniq) > ../,,diffs
         cat ../,,diffs | while read line ; do
             echo RM:$line
             cp AUTHORS ../,,auth
@@ -167,6 +186,11 @@ process-repo() {
         cat AUTHORS | grep '^[^ ]*$' | sed 's@^@###### WARN: @g'
         cp AUTHORS ../,,auth
         cat ../,,auth | grep -v '^[^ ]*$' > AUTHORS
+        # remove opt-out (NB: currently it ignores the date of opt-out) (NB: could move to _git-all-authors?) WARNING: need $reponame
+        cp AUTHORS ../,,auth
+        cat ../,,auth | grep -v "^\($(cat ../all-moreinfo | grep $reponame|awk -F, '{printf $1"\\|"}')zz-.*\)\$" > AUTHORS
+        echo "#### Diff from opt-out:"
+        diff ../,,auth AUTHORS |colordiff
         # back
         cd -
     done
@@ -177,7 +201,7 @@ check-author-diff-summary() {
     for i in $(list-repos); do
         cd $i
         echo "////////// $i //////////"
-        diff <(cat AUTHORS |sort |uniq) <(git log --use-mailmap --format="%aN" |sort |uniq)    ||true
+        diff <(cat AUTHORS |sort |uniq) <(git log --use-mailmap --format="%aN" $GIT_LOG_PATHSPEC |sort |uniq)    ||true
         cd -
     done
 }

@@ -77,6 +77,14 @@ Now, let's tune the authors (this time, it involves some implementation, so it w
     A check-all-mailmap
     ##DO: continue fixing, checking also all "Missing" to find typos (but many have actually not commited anything or on instructor-training which is not in this release?)
 
+Now that we have a decent global mailmap, let's patch all repositories (with their own .mailmap and AUTHORS). This is the occasion to list as AUTHORS only the ones that: contributed (outside `style` and did not opt out for these commits, this is automated).
+
+    python3 rel.py git-for-all 2017-08.ini checkout -- .mailmap AUTHORS
+    A process-repo
+    python3 rel.py sort-authors 2017-08.ini
+    python3 rel.py git-for-all 2017-08.ini diff
+
+
 # RANDOM NOTES 2017-06-03 (somewhat jibberish)
 
     python3 rel.py 1 --version 9999-none

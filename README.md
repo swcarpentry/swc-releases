@@ -110,7 +110,16 @@ NOW, let's go for the release, we already have the ini file (we'll add it to hav
     B 5
     #^ the new TAG feature failed so we fix and rerun
     B 5
-
+    B git-for-all log --oneline -n 2
+    #^ to be sure of wether some did not work (temporary add force_branch=1 in the ini for repo to redo)
+    A
+    #^ to be sure to unobfuscate
+    B 6
+    #^ needed a few run as I was making the orcid handling at the same time (need to remove the lines in the .ini so they get rebuilt)
+    ##DO: for the templates, manually set maintainers to "Silva, Raniere;Emonet, Rémi@0000-0002-1870-1329"
+    C
+    B 7
+    B 8
 
 # RANDOM NOTES 2017-06-03 (somewhat jibberish)
 

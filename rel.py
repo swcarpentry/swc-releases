@@ -11,6 +11,7 @@ import requests
 import yaml
 import re
 import datetime
+import csv
 
 # Main keys used in the ini file
 VERSION = 'version'
@@ -228,7 +229,7 @@ def update_zenodo_submission():
         c = cfg[r]
         if ZENODO_ID in c:
             if args.force_replace:
-                out("... discard curnrent changes and unlock for edit")
+                out("... discard current changes and unlock for edit")
                 discard_url = 'https://{}/api/deposit/depositions/{}/actions/discard?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
                 edit_url = 'https://{}/api/deposit/depositions/{}/actions/edit?access_token={}'.format(zenodo_site, c[ZENODO_ID], zc[PRIVATE_TOKEN])
                 print(requests.post(discard_url))
@@ -238,12 +239,19 @@ def update_zenodo_submission():
             if len(description) == 0:
                 description = "TODO DESCRIPTION"
                 out("!!! missing description")
+            def zenodo_author(m, base={}):
+                o = dict(base) # copy
+                parts = m.split("@")
+                o["name"] = parts[0]
+                if len(parts) > 1:
+                    o["orcid"] = parts[1]
+                return o
             metadata = {"metadata": {
             "title": c[FULLTITLE],
             "upload_type": "lesson",
             "description": description,
-            "contributors": [{"name": m, "type": "Editor"} for m in c[MAINTAINERS].split(';')],
-            "creators": [{"name": m} for m in c[AUTHORS].split(';')],
+            "contributors": [zenodo_author(m, {"type": "Editor"}) for m in c[MAINTAINERS].split(';')],
+            "creators": [zenodo_author(m) for m in c[AUTHORS].split(';')],
             "communities": [{"identifier": "swcarpentry"}], # TODO maybe use c[COMMUNITIES].split... if generalization is required
             }}
             req = requests.put(update_url, data=json.dumps(metadata), headers=HEADERS_JSON)
@@ -253,11 +261,23 @@ def update_zenodo_submission():
             assert c[DOI] == resp['metadata']['prereserve_doi']['doi']
             assert len(resp['metadata']['communities']) > 0
 
+def readcsv(fname):
+    with open(fname, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        return { l[0]: l[1:] for l in reader if not l[0].startswith('#') }
+
+def possible_orcid(moreauthorinfo, rawname):
+    if rawname not in moreauthorinfo.keys():
+        return ''
+    if moreauthorinfo[rawname][0] == '':
+        return ''
+    return '@'+moreauthorinfo[rawname][0]
 
 def guess_informations_from_repository():
     parser = new_parser_with_ini_file('Creating Zenodo submission for those who have none.')
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
+    moreauthorinfo = readcsv('all-moreinfo')
     out("EXTRACTING LESSON INFO")
     for r in cfg.sections():
         out("***", r)
@@ -287,27 +307,27 @@ def guess_informations_from_repository():
                         raw = re.sub(r'''^[^[]*\[([^]]*)\].*$''', r'\1', l)
                         if '[' in raw: continue # replace failed?
                         first_name, last_name = guess_person_name(raw)
-                        maintainers.append(last_name + ', ' + first_name)
+                        maintainers.append(last_name + ', ' + first_name + possible_orcid(moreauthorinfo, raw))
                     if mode==0 and 'aintainer' in l: mode = 1
             c[MAINTAINERS] = ';'.join(maintainers)
             print(MAINTAINERS+':', c[MAINTAINERS])
         # authors from the AUTHORS file
         # cat ,,*/AUTHORS |sort |uniq|grep -v '^[^ ]* [^ ]*$'
         if AUTHORS not in c:
-            authors = get_sorted_authors(c[FOLDER])
+            authors = get_sorted_authors(c[FOLDER], moreauthorinfo)
             c[AUTHORS] = ';'.join(authors)
             print(AUTHORS+':', c[AUTHORS])
         # save each time
         save_ini_file(cfg, args.ini_file)
 
-def get_sorted_authors(folder):
+def get_sorted_authors(folder, moreauthorinfo):
     authors = []
     with open (folder+"/AUTHORS", "r") as readme:
         for l in readme.readlines():
             l = l.replace('\n', '')
             if len(l.strip()) == 0: continue
             first_name, last_name = guess_person_name(l)
-            authors.append(last_name + ', ' + first_name)
+            authors.append(last_name + ', ' + first_name + possible_orcid(moreauthorinfo, l))
     authors = [a.upper()+' @@@ '+a for a in authors]
     authors = sorted(list(set(authors)))
     authors = [re.sub(r'.* @@@ ', '', a) for a in authors]

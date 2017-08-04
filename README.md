@@ -134,8 +134,14 @@ Now, we need to check on zenodo, but we can still also host the release (it is a
     rm -rf 2017.08/
     make clean-failure
     make 2017.08
-    
+
     git commit -m 'Release 2017.08'
+
+And we can make some bibtex and html:
+
+    B print-publication-record -o bib-html.html
+    B print-bibtex -t book     -o bib-book.bib
+    B print-bibtex             -o bib-misc.bib
 
 # RANDOM NOTES 2017-06-03 (somewhat jibberish)
 

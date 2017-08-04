@@ -553,7 +553,7 @@ def publication_record():
             out("***", r, "@", c[FOLDER])
             o.write('<li>\n')
             o.write('    {} ({}): "{}" Version {}, {},\n'.format(
-                ' and '.join(eds.split(';')),
+                ' and '.join(onlynames(eds.split(';'))),
                 'eds' if ';' in eds else 'ed',
                 c[FULLTITLE],
                 c[VERSION],
@@ -563,6 +563,11 @@ def publication_record():
             o.write('    <a href="{}">{}</a>\n'.format(zen, c[DOI]))
             o.write('</li>\n')
         o.write('</ul>\n')
+    print("Generated HTML snippet into '"+str(args.output)+"'")
+
+
+def onlynames(l):
+    return map(lambda n: n.split('@')[0], l)
 
 def publication_record_bibtex():
     parser = new_parser_with_ini_file('Generate a publication record file.')
@@ -570,6 +575,7 @@ def publication_record_bibtex():
     parser.add_argument('--type', '-t', help="bibtex entry type", default="misc")
     args = parser.parse_args(sys.argv[1:])
     cfg = read_ini_file(args.ini_file)
+
     with open(args.output, 'w') as o:
         for r in cfg.sections():
             c = cfg[r]
@@ -577,10 +583,10 @@ def publication_record_bibtex():
                 c[MAINTAINERS].split(',')[0].split(' ')[0].lower(),
                 c[VERSION].split('.')[0],
                 c[ZENODO_ID])
-            tex_authors = ' and '.join(c[MAINTAINERS].split(';'))
-            tex_bookauthors = ' and '.join(c[AUTHORS].split(';'))
+            tex_authors = ' and '.join(onlynames(c[MAINTAINERS].split(';')))
+            tex_bookauthors = ' and '.join(onlynames(c[AUTHORS].split(';')))
             eds = c[MAINTAINERS]
-            tex_bookeds = ' and '.join(c[MAINTAINERS].split(';'))
+            tex_bookeds = ' and '.join(onlynames(c[MAINTAINERS].split(';')))
             url = 'https://github.com/swcarpentry/git-novice/tree/'+c[VERSION]
             doi_url = 'https://doi.org/'+c[DOI]
             out("***", r, "@", c[FOLDER])

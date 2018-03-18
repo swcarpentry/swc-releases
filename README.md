@@ -14,7 +14,7 @@ Pre task: ensure AUTHORS are ok in all repositories
 
 Pre setup:
 
-- `cp private.teplate.ini private.ini`
+- `cp private.template.ini private.ini`
 - edit `private.ini` and set your access keys in it
 - install/update some R packages (see below for now)
 - use `python3 rel.py 1 --version 2017.02` to generate a template ini file from the latest version

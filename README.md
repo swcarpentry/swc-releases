@@ -1,6 +1,7 @@
 # swc-releases
 Container for Software Carpentry lesson releases
 
+- <http://swcarpentry.github.io/swc-releases/2017.08/>
 - <http://swcarpentry.github.io/swc-releases/2017.02/>
 - <http://swcarpentry.github.io/swc-releases/2016.06/>
 - <http://swcarpentry.github.io/swc-releases/2015.08/> (5.3)
@@ -8,7 +9,7 @@ Container for Software Carpentry lesson releases
 <!-- - <http://swcarpentry.github.io/swc-releases/2016.06-alpha/> (pre-bbq) -->
 
 
-# Release Model: as of 2017.02
+# Release Model: as of 2017.02/08
 
 Pre task: ensure AUTHORS are ok in all repositories
 
